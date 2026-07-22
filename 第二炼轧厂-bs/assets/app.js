@@ -321,13 +321,14 @@
   function renderSidebar() {
     var html = [];
     html.push('<aside class="sidebar">');
-    html.push('<div class="brand"><div class="brand-mark">LZ</div><div><h1>第二炼轧厂</h1><p>WinForms 向 B/S 的过渡骨架</p></div></div>');
+    html.push('<div class="brand"><div class="brand-mark"><img src="./assets/company-logo.jpeg" alt="河南钢铁"></div><div><h1>第二炼轧厂</h1><p>精量化成本核算系统</p></div></div>');
 
     html.push('<nav class="tree-nav" aria-label="系统菜单">');
     each(navTree, function (node) {
       html.push(renderMenuNode(node, 1));
     });
     html.push("</nav>");
+    html.push('<div class="sidebar-footer"><span class="live-dot"></span><span>系统运行中 · B/S 平台</span></div>');
 
     html.push("</aside>");
     return html.join("");
@@ -384,7 +385,7 @@
     var system = state.bootstrap && state.bootstrap.system ? state.bootstrap.system : {};
     return [
       '<header class="topbar">',
-      "<div>",
+      '<div class="page-heading"><div class="breadcrumb">第二炼轧厂 <span>/</span> ' + safe(page.title) + '</div>',
       "<h2>" + safe(page.title) + "</h2>",
       "<p>" + safe(describePage(page)) + "</p>",
       "</div>",
@@ -449,7 +450,7 @@
     html.push('<h3>以“1780、炉卷、炼钢”三个子系统组织基础数据、实绩采集和成本计算</h3>');
     html.push('<p>炼钢按钢种路径核算钢水、合金、辅材、炼钢与连铸工序成本，形成炼钢水平附加；1780与炉卷再按钢种组距、生产实绩和分摊规则计算轧钢制造成本。三级实绩按8小时采集，固定消耗支持人工维护。</p>');
     html.push('<div class="hero-actions"><button class="primary-btn" data-nav="costSummary">查看轧钢成本总表</button><button class="secondary-btn" data-nav="steelmakingPrices">维护炼钢水平附加</button></div>');
-    html.push('</div><div class="hero-panel"><div class="flow-card"><div class="flow-step">1. Frontend 页面</div><div class="flow-step">2. API 边界</div><div class="flow-step">3. Mock Repository</div><div class="flow-step">4. SQL Repository Later</div></div></div></div>');
+    html.push('</div><div class="hero-panel"><div class="flow-card"><div class="flow-caption">成本数据闭环</div><div class="flow-step"><b>01</b><span>基础参数</span></div><div class="flow-line"></div><div class="flow-step"><b>02</b><span>实绩采集</span></div><div class="flow-line"></div><div class="flow-step"><b>03</b><span>成本核算</span></div><div class="flow-line"></div><div class="flow-step"><b>04</b><span>经营分析</span></div></div></div></div>');
 
     html.push('<div class="card-grid">');
     each(cards, function (card) {

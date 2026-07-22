@@ -123,6 +123,10 @@ function Get-ContentType {
         ".html" { return "text/html; charset=utf-8" }
         ".css" { return "text/css; charset=utf-8" }
         ".js" { return "application/javascript; charset=utf-8" }
+        ".jpeg" { return "image/jpeg" }
+        ".jpg" { return "image/jpeg" }
+        ".png" { return "image/png" }
+        ".ico" { return "image/x-icon" }
         default { return "text/plain; charset=utf-8" }
     }
 }
@@ -209,8 +213,8 @@ function Write-StaticFile {
         return
     }
 
-    $content = Get-Content $fullTarget -Raw -Encoding UTF8
-    Write-Text -Stream $Stream -Text $content -ContentType (Get-ContentType $fullTarget)
+    $content = [System.IO.File]::ReadAllBytes($fullTarget)
+    Write-HttpResponse -Stream $Stream -StatusCode 200 -ContentType (Get-ContentType $fullTarget) -BodyBytes $content
 }
 
 function Handle-Api {
