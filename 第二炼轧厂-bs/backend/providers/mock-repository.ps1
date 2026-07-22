@@ -500,7 +500,20 @@ function Mock-RunSchedule {
 
 function Mock-PublicUser {
     param([Parameter(Mandatory = $true)]$User)
-    return [ordered]@{ id = $User.id; account = $User.account; password = $User.password; group = $User.group }
+    $displayName = if ($User.name) {
+        $User.name
+    } elseif ($User.displayName) {
+        $User.displayName
+    } else {
+        switch ([string]$User.account) {
+            "yaopeng" { "姚鹏" }
+            "guoxiaoming" { "郭晓明" }
+            "songmengxiao" { "宋梦晓" }
+            "admin" { "系统管理员" }
+            default { $User.account }
+        }
+    }
+    return [ordered]@{ id = $User.id; account = $User.account; name = $displayName; phone = if ($User.phone) { $User.phone } else { "" }; displayName = $displayName; password = $User.password; group = $User.group }
 }
 
 function Mock-GetSystemUsers {

@@ -871,6 +871,12 @@ input:focus, select:focus { outline: 2px solid rgba(11,107,142,.2); border-color
 .group-item { padding: 16px; border: 1px solid #dbe5e9; border-top: 3px solid #0b6b8e; background: #fbfcfd; }
 .group-item strong, .group-item span { display: block; }
 .group-item span { margin-top: 5px; color: #748590; font-size: 12px; }
+.group-members { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.group-members em { color: #87959e; font-size: 12px; font-style: normal; }
+.member-link { border: 1px solid #cbdbe2; border-radius: 3px; padding: 5px 8px; background: #fff; color: #0b6b8e; font: inherit; font-size: 12px; cursor: pointer; }
+.member-link:hover, .member-link.active { border-color: #0b6b8e; background: #e8f4f8; }
+.password-value { color: #9a5a16 !important; font-family: Consolas, "Microsoft YaHei", monospace; }
+.group-total { margin-top: 14px; padding: 10px 12px; border-left: 3px solid #0b6b8e; background: #edf6f9; color: #315968; font-size: 12px; }
 .password-cell { color: #9a5a16; font-family: Consolas, "Microsoft YaHei", monospace; }
 .user-message { margin-top: 14px; padding: 9px 11px; border-left: 3px solid #19805e; background: #edf8f2; color: #217057; font-size: 12px; }
 .user-message.error { border-left-color: #bd3d3d; background: #fff0f0; color: #a62f2f; }

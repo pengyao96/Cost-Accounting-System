@@ -161,12 +161,14 @@
   indexMenuPages(navTree, []);
   pageMap["user-management"] = { id: "user-management", title: "用户管理", kind: "userManagement" };
   pageMap["user-group-management"] = { id: "user-group-management", title: "用户组管理", kind: "userGroups" };
+  var LAST_PAGE_STORAGE_KEY = "second-rolling-last-page";
+  var SESSION_STORAGE_KEY = "second-rolling-session";
 
   var state = {
     loading: true,
     error: "",
-    currentPage: "dashboard",
-    session: null,
+    currentPage: getLastPage(),
+    session: getStoredSession(),
     expandedMenus: {},
     bootstrap: null,
     datasets: {},
@@ -196,7 +198,9 @@
     userManagement: { payload: null, draft: null, groups: [] }
   };
 
-  if (DEBUG_AUTO_LOGIN) {
+  if (state.session) {
+    initialize();
+  } else if (DEBUG_AUTO_LOGIN) {
     loginWithCredentials("admin", "123456");
   } else {
     render();
@@ -213,6 +217,9 @@
 
       state.loading = false;
       render();
+      if (state.currentPage !== "dashboard") {
+        navigateTo(state.currentPage);
+      }
       runCost();
       runStandardCost();
       runSchedule("lj", false);
@@ -293,6 +300,7 @@
       return;
     }
     state.currentPage = pageId;
+    saveLastPage(pageId);
     each(pageMenuPaths[pageId] || [], function (menuId) {
       state.expandedMenus[menuId] = true;
     });
@@ -334,6 +342,48 @@
     ].join("");
 
     bindEvents();
+  }
+
+  function getLastPage() {
+    try {
+      var pageId = window.localStorage.getItem(LAST_PAGE_STORAGE_KEY);
+      return pageId && pageMap[pageId] ? pageId : "dashboard";
+    } catch (error) {
+      return "dashboard";
+    }
+  }
+
+  function saveLastPage(pageId) {
+    try {
+      window.localStorage.setItem(LAST_PAGE_STORAGE_KEY, pageId);
+    } catch (error) {
+      // Browsing can continue when storage is unavailable.
+    }
+  }
+
+  function getStoredSession() {
+    try {
+      var raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function saveSession(session) {
+    try {
+      window.sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+    } catch (error) {
+      // Browsing can continue when storage is unavailable.
+    }
+  }
+
+  function clearStoredSession() {
+    try {
+      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (error) {
+      // Browsing can continue when storage is unavailable.
+    }
   }
 
   function renderSidebar() {
@@ -463,6 +513,7 @@
         return;
       }
       state.session = result;
+      saveSession(result);
       initialize();
     });
   }
@@ -704,13 +755,15 @@
     var draft = state.userManagement.draft || (rows[0] ? cloneRow(rows[0]) : { account: "", password: "", group: "" });
     var groups = state.userManagement.groups || [];
     var html = [];
-    html.push('<div class="two-column user-management"><section class="panel table-panel"><div class="panel-header"><h3>账户信息</h3><p>' + (isAdmin ? '系统管理员可维护全部账户、密码与组归属。' : '当前账户仅可查看本人信息并修改自己的密码。') + '</p></div>');
+    html.push('<div class="two-column user-management"><section class="panel table-panel"><div class="panel-header"><h3>账户信息</h3><p>' + (isAdmin ? '系统管理员可维护全部账户、密码与组归属。' : '当前账户仅可查看本人信息并修改自己的密码。') + ' 当前共 ' + safe(String(rows.length)) + ' 个账户。</p></div>');
     if (isAdmin) { html.push('<div class="toolbar"><button class="primary-btn" data-action="new-user">新增用户</button></div>'); }
-    html.push('<div class="table-wrap"><table><thead><tr><th>账户</th><th>当前密码</th><th>组归属</th></tr></thead><tbody>');
-    each(rows, function (row) { html.push('<tr class="' + (String(draft.id) === String(row.id) ? 'selected' : '') + '" data-user-row="' + safe(row.id) + '"><td>' + safe(row.account) + '</td><td class="password-cell">' + safe(row.password) + '</td><td>' + safe(row.group) + '</td></tr>'); });
+    html.push('<div class="table-wrap"><table><thead><tr><th>姓名</th><th>组归属</th><th>账户</th><th>当前密码</th><th>电话</th></tr></thead><tbody>');
+    each(rows, function (row) { html.push('<tr class="' + (String(draft.id) === String(row.id) ? 'selected' : '') + '" data-user-row="' + safe(row.id) + '"><td>' + safe(row.name || '') + '</td><td>' + safe(row.group) + '</td><td>' + safe(row.account) + '</td><td class="password-cell">' + safe(row.password) + '</td><td>' + safe(row.phone || '') + '</td></tr>'); });
     html.push('</tbody></table></div></section><section class="panel"><div class="panel-header"><h3>' + (isAdmin ? '账户维护' : '我的账户') + '</h3><p>当前账号：' + safe(state.session.user.account) + ' · 组归属：' + safe(state.session.user.group) + '</p></div>');
-    html.push('<div class="editor-form"><label><span>账户</span><input name="user-account-' + safe(draft.id || 'new') + '" autocomplete="off" data-user-field="account" value="' + safeInputValue(draft.account) + '"' + (isAdmin ? '' : ' disabled') + '></label>');
-    if (isAdmin) { html.push('<label><span>密码</span><input name="user-password-' + safe(draft.id || 'new') + '" type="password" autocomplete="new-password" data-user-field="password" value="" placeholder="新建时必填；留空则保留原密码"></label><label><span>组归属</span><select data-user-field="group"><option value=""' + (draft.group ? '' : ' selected') + '>请选择用户组</option>' + groups.map(function (group) { return '<option value="' + safe(group) + '"' + (group === draft.group ? ' selected' : '') + '>' + safe(group) + '</option>'; }).join('') + '</select></label>'); }
+    html.push('<div class="editor-form">');
+    if (isAdmin) { html.push('<label><span>姓名</span><input autocomplete="off" data-user-field="name" value="' + safeInputValue(draft.name || '') + '" placeholder="可后续补充"></label><label><span>组归属</span><select data-user-field="group"><option value=""' + (draft.group ? '' : ' selected') + '>请选择用户组</option>' + groups.map(function (group) { return '<option value="' + safe(group) + '"' + (group === draft.group ? ' selected' : '') + '>' + safe(group) + '</option>'; }).join('') + '</select></label>'); }
+    html.push('<label><span>账户</span><input name="user-account-' + safe(draft.id || 'new') + '" autocomplete="off" data-user-field="account" value="' + safeInputValue(draft.account) + '"' + (isAdmin ? '' : ' disabled') + '></label>');
+    if (isAdmin) { html.push('<label><span>密码</span><input name="user-password-' + safe(draft.id || 'new') + '" type="password" autocomplete="new-password" data-user-field="password" value="" placeholder="新建时必填；留空则保留原密码"></label><label><span>电话</span><input autocomplete="off" data-user-field="phone" value="' + safeInputValue(draft.phone || '') + '" placeholder="可后续补充"></label>'); }
     html.push('<div class="form-actions">');
     if (isAdmin) { html.push('<button class="primary-btn" data-action="save-user">保存账户</button><button class="danger-btn" data-action="delete-user"' + (draft.id ? '' : ' disabled') + '>删除账户</button>'); }
     html.push('<button class="secondary-btn" data-action="show-password-form">修改密码</button></div></div>');
@@ -721,10 +774,33 @@
   }
 
   function renderUserGroups() {
-    var groups = state.userManagement.groups || [];
-    var html = ['<section class="panel"><div class="panel-header"><h3>用户组管理</h3><p>当前已配置的用户组。用户组增删将在接入真实权限仓储后开放。</p></div><div class="group-grid">'];
-    each(groups, function (group) { html.push('<div class="group-item"><strong>' + safe(group) + '</strong><span>系统用户组</span></div>'); });
-    html.push('</div></section>');
+    var groups = (state.userManagement.groups || []).slice();
+    var users = (state.userManagement.payload || {}).rows || [];
+    var selected = state.userManagement.groupSelectedUser;
+    var assignedCount = 0;
+    each(users, function (user) {
+      var groupName = user.group || "未分配用户组";
+      if (groups.indexOf(groupName) < 0) { groups.push(groupName); }
+    });
+    var html = ['<div class="two-column"><section class="panel"><div class="panel-header"><h3>用户组管理</h3><p>用户管理共 ' + safe(String(users.length)) + ' 个账户；以下用户组已配备 ' + safe(String(users.length)) + ' 名成员。点击姓名查看账户和附属信息。</p></div><div class="group-grid">'];
+    each(groups, function (group) {
+      var members = users.filter(function (user) { return (user.group || "未分配用户组") === group; });
+      assignedCount += members.length;
+      html.push('<div class="group-item"><strong>' + safe(group) + '</strong><span>' + safe(String(members.length)) + ' 名成员</span><div class="group-members">');
+      if (members.length) {
+        each(members, function (user) { html.push('<button class="member-link ' + (selected && String(selected.id) === String(user.id) ? 'active' : '') + '" data-group-member="' + safe(user.id) + '">' + safe(user.displayName || user.account) + '</button>'); });
+      } else {
+        html.push('<em>暂无成员</em>');
+      }
+      html.push('</div></div>');
+    });
+    html.push('</div><div class="group-total">已展示 ' + safe(String(assignedCount)) + ' / ' + safe(String(users.length)) + ' 名用户</div></section><section class="panel group-detail"><div class="panel-header"><h3>员工信息</h3><p>此处可在后续接入岗位、联系方式、权限范围等附属信息。</p></div>');
+    if (selected) {
+      html.push('<div class="detail-list"><div class="detail-item"><div><strong>姓名</strong><p>员工显示名称</p></div><span>' + safe(selected.name || selected.displayName || selected.account) + '</span></div><div class="detail-item"><div><strong>组归属</strong><p>当前用户组</p></div><span>' + safe(selected.group) + '</span></div><div class="detail-item"><div><strong>账户</strong><p>系统登录账户</p></div><span>' + safe(selected.account) + '</span></div><div class="detail-item"><div><strong>当前密码</strong><p>仅调试阶段明文展示</p></div><span class="password-value">' + safe(selected.password) + '</span></div><div class="detail-item"><div><strong>电话</strong><p>前端维护的联系方式</p></div><span>' + safe(selected.phone || '-') + '</span></div></div>');
+    } else {
+      html.push('<div class="empty-detail"><strong>请选择员工</strong><p>点击左侧用户组中的姓名查看详情。</p></div>');
+    }
+    html.push('</section></div>');
     return html.join('');
   }
 
@@ -737,6 +813,7 @@
 
     bindClick("[data-action='logout']", function () {
       state.session = null;
+      clearStoredSession();
       state.userManagement = { payload: null, draft: null, groups: [] };
       render();
     });
@@ -935,6 +1012,11 @@
       runSchedule(button.getAttribute("data-line"), true);
     });
 
+    bindClick("[data-group-member]", function (button) {
+      state.userManagement.groupSelectedUser = findRowById((state.userManagement.payload || {}).rows || [], button.getAttribute('data-group-member'));
+      render();
+    });
+
     bindClick("[data-user-row]", function (rowButton) {
       var row = findRowById((state.userManagement.payload || {}).rows || [], rowButton.getAttribute('data-user-row'));
       state.userManagement.draft = cloneRow(row);
@@ -953,7 +1035,7 @@
     });
 
     bindClick("[data-action='new-user']", function () {
-      state.userManagement.draft = { id: 0, account: '', password: '', group: '' };
+      state.userManagement.draft = { id: 0, account: '', name: '', phone: '', password: '', group: '' };
       state.userManagement.isCreating = true;
       state.userManagement.showPassword = false;
       state.userManagement.message = '';
@@ -966,7 +1048,7 @@
         state.userManagement.message = '账户已保存。';
         state.userManagement.messageType = 'success';
         if (state.userManagement.isCreating) {
-          state.userManagement.draft = { id: 0, account: '', password: '', group: '' };
+          state.userManagement.draft = { id: 0, account: '', name: '', phone: '', password: '', group: '' };
         }
         loadUserManagement(function () { render(); });
       });

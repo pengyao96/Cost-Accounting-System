@@ -1,6 +1,6 @@
 ﻿{
     "version":  1,
-    "savedAt":  "2026-07-22T15:01:40",
+    "savedAt":  "2026-07-22T16:07:20",
     "datasets":  {
                      "steelmakingGrades":  [
                                                {
@@ -742,16 +742,22 @@
                  },
     "systemUsers":  [
                         {
-                            "account":  "admin",
                             "id":  1,
-                            "group":  "系统管理员",
-                            "password":  "123456"
+                            "account":  "admin",
+                            "name":  "管理员",
+                            "phone":  "",
+                            "displayName":  "系统管理员",
+                            "password":  "123456",
+                            "group":  "系统管理员"
                         },
                         {
-                            "account":  "yaopeng",
                             "id":  2,
-                            "group":  "技术科",
-                            "password":  "123456"
+                            "account":  "yaopeng",
+                            "name":  "姚鹏",
+                            "phone":  "",
+                            "displayName":  "姚鹏",
+                            "password":  "112233",
+                            "group":  "技术科"
                         },
                         {
                             "account":  "guoxiaoming",
@@ -764,18 +770,6 @@
                             "id":  4,
                             "group":  "财务科",
                             "password":  "123456"
-                        },
-                        {
-                            "id":  5,
-                            "account":  "zhangsan",
-                            "password":  "123456",
-                            "group":  "技术科"
-                        },
-                        {
-                            "id":  6,
-                            "account":  "liuzi",
-                            "password":  "785976",
-                            "group":  "技术科"
                         }
                     ],
     "userGroups":  [

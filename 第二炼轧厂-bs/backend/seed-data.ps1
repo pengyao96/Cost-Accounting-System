@@ -45,10 +45,10 @@
         )
         userGroups = @("系统管理员", "财务科", "安全科", "技术科")
         systemUsers = @(
-            @{ id = 1; account = "admin"; password = "123456"; group = "系统管理员" }
-            @{ id = 2; account = "yaopeng"; password = "123456"; group = "技术科" }
-            @{ id = 3; account = "guoxiaoming"; password = "123456"; group = "安全科" }
-            @{ id = 4; account = "songmengxiao"; password = "123456"; group = "财务科" }
+            @{ id = 1; account = "admin"; displayName = "系统管理员"; name = "系统管理员"; phone = ""; password = "123456"; group = "系统管理员" }
+            @{ id = 2; account = "yaopeng"; displayName = "姚鹏"; name = "姚鹏"; phone = ""; password = "123456"; group = "技术科" }
+            @{ id = 3; account = "guoxiaoming"; displayName = "郭晓明"; name = "郭晓明"; phone = ""; password = "123456"; group = "安全科" }
+            @{ id = 4; account = "songmengxiao"; displayName = "宋梦晓"; name = "宋梦晓"; phone = ""; password = "123456"; group = "财务科" }
         )
         authTokens = @{}
         datasetConfig = $datasetConfig
