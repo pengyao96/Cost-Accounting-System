@@ -43,6 +43,14 @@
             @{ code = "炼钢"; title = "炼钢精量化成本"; source = "基础数据 / 实时成本"; summary = "按钢种路径核算钢水、合金、辅材、炼钢与连铸工序成本，并提供水平附加" }
             @{ code = "标准成本"; title = "标准成本"; source = "SC"; summary = "按产量门槛筛选并提炼平均标准成本与标准成本" }
         )
+        userGroups = @("系统管理员", "财务科", "安全科", "技术科")
+        systemUsers = @(
+            @{ id = 1; account = "admin"; password = "123456"; group = "系统管理员" }
+            @{ id = 2; account = "yaopeng"; password = "123456"; group = "技术科" }
+            @{ id = 3; account = "guoxiaoming"; password = "123456"; group = "安全科" }
+            @{ id = 4; account = "songmengxiao"; password = "123456"; group = "财务科" }
+        )
+        authTokens = @{}
         datasetConfig = $datasetConfig
         datasets = [ordered]@{
             steelmakingGrades = @(

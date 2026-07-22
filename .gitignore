@@ -1,0 +1,33 @@
+# Documentation and office files
+*.md
+*.doc
+*.docx
+*.pdf
+*.xls
+*.xlsx
+
+# Local service state and runtime data
+第二炼轧厂-bs/.bs-server.pid
+第二炼轧厂-bs/backend/data/
+*.log
+*.tmp
+*.bak
+
+# Editor and operating-system files
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Common dependency and build output
+node_modules/
+dist/
+build/
+coverage/
+bin/
+obj/

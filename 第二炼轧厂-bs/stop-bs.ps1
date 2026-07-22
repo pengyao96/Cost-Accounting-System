@@ -1,14 +1,29 @@
 $pidFile = Join-Path $PSScriptRoot ".bs-server.pid"
 
-if (-not (Test-Path $pidFile)) {
-    Write-Host "No running Second Lianzha B/S service was found."
-    exit 0
+function Get-ServerProcessId {
+    if (Test-Path $pidFile) {
+        $savedPid = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($savedPid) {
+            try {
+                Get-Process -Id ([int]$savedPid) -ErrorAction Stop | Out-Null
+                return [int]$savedPid
+            } catch {
+                # Fall through to the port check when a stale PID file is found.
+            }
+        }
+    }
+
+    $listener = Get-NetTCPConnection -State Listen -LocalPort 8091 -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($listener) {
+        return [int]$listener.OwningProcess
+    }
+    return $null
 }
 
-$pidValue = Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1
+$pidValue = Get-ServerProcessId
 if (-not $pidValue) {
     Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
-    Write-Host "PID file was empty and has been removed."
+    Write-Host "No running Second Lianzha B/S service was found on port 8091."
     exit 0
 }
 

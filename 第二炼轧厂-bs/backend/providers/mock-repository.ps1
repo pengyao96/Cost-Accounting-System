@@ -1,4 +1,6 @@
-. (Join-Path (Split-Path -Parent $PSScriptRoot) "seed-data.ps1")
+﻿. (Join-Path (Split-Path -Parent $PSScriptRoot) "seed-data.ps1")
+
+. (Join-Path $PSScriptRoot "state-store.ps1")
 
 function Mock-ToPlain {
     param([Parameter(Mandatory = $true)]$Value)
@@ -496,10 +498,58 @@ function Mock-RunSchedule {
     }
 }
 
+function Mock-PublicUser {
+    param([Parameter(Mandatory = $true)]$User)
+    return [ordered]@{ id = $User.id; account = $User.account; password = $User.password; group = $User.group }
+}
+
+function Mock-GetSystemUsers {
+    param([Parameter(Mandatory = $true)]$Repository)
+    $rows = @()
+    foreach ($item in @($Repository.State.systemUsers)) {
+        if ($item -is [System.Array]) {
+            foreach ($nested in $item) { $rows += ,$nested }
+        } else {
+            $rows += ,$item
+        }
+    }
+    return $rows
+}
+
+function Mock-EnsureAdminUser {
+    param([Parameter(Mandatory = $true)]$Repository)
+    $rows = @(Mock-GetSystemUsers -Repository $Repository)
+    $admin = @($rows | Where-Object { $_.account -eq "admin" }) | Select-Object -First 1
+    if (-not $admin) {
+        $nextId = if ($rows.Count -gt 0) { Mock-NextId -Rows $rows } else { 1 }
+        $rows += ,[ordered]@{ id = $nextId; account = "admin"; password = "123456"; group = "系统管理员" }
+        $Repository.State.systemUsers = $rows
+    }
+    return $rows
+}
+
+function Mock-GetSessionUser {
+    param([Parameter(Mandatory = $true)]$Repository, [string]$Token)
+    if ([string]::IsNullOrWhiteSpace($Token) -or -not $Repository.State.authTokens.ContainsKey($Token)) {
+        throw "请先登录系统"
+    }
+    $account = $Repository.State.authTokens[$Token]
+    $user = @((Mock-EnsureAdminUser -Repository $Repository) | Where-Object { $_.account -eq $account }) | Select-Object -First 1
+    if (-not $user) { throw "当前登录账户不存在" }
+    return $user
+}
+
+function Mock-AssertAdmin {
+    param([Parameter(Mandatory = $true)]$Repository, [string]$Token)
+    $user = Mock-GetSessionUser -Repository $Repository -Token $Token
+    if ($user.group -ne "系统管理员") { throw "仅系统管理员可执行此操作" }
+    return $user
+}
+
 function New-MockRepository {
     $repository = [pscustomobject]@{
         ProviderName = "mock"
-        State = Get-SeedData
+        State = Restore-MockPersistentState (Get-SeedData)
     }
 
     $repository | Add-Member -MemberType ScriptMethod -Name GetBootstrap -Value {
@@ -527,6 +577,7 @@ function New-MockRepository {
     $repository | Add-Member -MemberType ScriptMethod -Name SaveDatasetRow -Value {
         param([string]$Name, $Payload)
         $row = Mock-SaveRow -Repository $this -Name $Name -Payload $Payload
+        Save-MockPersistentState -State $this.State
         return [ordered]@{
             saved = $row
             rows = Mock-GetDatasetRows -Repository $this -Name $Name
@@ -537,6 +588,7 @@ function New-MockRepository {
     $repository | Add-Member -MemberType ScriptMethod -Name DeleteDatasetRow -Value {
         param([string]$Name, [int]$Id)
         Mock-DeleteRow -Repository $this -Name $Name -Id $Id
+        Save-MockPersistentState -State $this.State
         return [ordered]@{
             rows = Mock-GetDatasetRows -Repository $this -Name $Name
             meta = Mock-GetDatasetMeta -Repository $this -Name $Name
@@ -546,6 +598,7 @@ function New-MockRepository {
     $repository | Add-Member -MemberType ScriptMethod -Name CollectDataset -Value {
         param([string]$Name)
         $row = Mock-CollectRow -Repository $this -Name $Name
+        Save-MockPersistentState -State $this.State
         return [ordered]@{
             collected = $row
             rows = Mock-GetDatasetRows -Repository $this -Name $Name
@@ -574,6 +627,77 @@ function New-MockRepository {
     $repository | Add-Member -MemberType ScriptMethod -Name RunSchedule -Value {
         param($Request)
         return Mock-RunSchedule -Repository $this -Request $Request
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name Login -Value {
+        param($Payload)
+        $account = [string]$Payload.account
+        $password = [string]$Payload.password
+        $users = Mock-EnsureAdminUser -Repository $this
+        $user = @($users | Where-Object { $_.account -eq $account -and $_.password -eq $password }) | Select-Object -First 1
+        if (-not $user) { throw "账户或密码错误" }
+        $token = [guid]::NewGuid().ToString("N")
+        $this.State.authTokens[$token] = $user.account
+        return [ordered]@{ token = $token; user = Mock-PublicUser $user }
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name GetUsers -Value {
+        param([string]$Token)
+        $current = Mock-GetSessionUser -Repository $this -Token $Token
+        $users = if ($current.group -eq "系统管理员") { @(Mock-GetSystemUsers -Repository $this) } else { @($current) }
+        return [ordered]@{ currentUser = Mock-PublicUser $current; isAdmin = ($current.group -eq "系统管理员"); rows = @($users | ForEach-Object { Mock-PublicUser $_ }) }
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name SaveUser -Value {
+        param([string]$Token, $Payload)
+        Mock-AssertAdmin -Repository $this -Token $Token | Out-Null
+        $row = Mock-ToPlain $Payload
+        $rows = Mock-EnsureAdminUser -Repository $this
+        $id = [int]$row.id
+        if ($id -eq 0) {
+            if ([string]::IsNullOrWhiteSpace([string]$row.account) -or [string]::IsNullOrWhiteSpace([string]$row.password) -or [string]::IsNullOrWhiteSpace([string]$row.group)) { throw "新建用户必须填写账户、密码和组归属" }
+            if (@($rows | Where-Object { $_.account -eq $row.account }).Count -gt 0) { throw "账户已存在" }
+            $id = Mock-NextId -Rows $rows
+            $row.id = $id
+            $updated = @()
+            foreach ($item in $rows) { $updated += ,$item }
+            $updated += ,$row
+            $this.State.systemUsers = $updated
+        } else {
+            $old = @($rows | Where-Object { [int]$_.id -eq $id }) | Select-Object -First 1
+            if (-not $old) { throw "用户不存在" }
+            if ([string]::IsNullOrWhiteSpace([string]$row.password)) { $row.password = $old.password }
+            $this.State.systemUsers = @($rows | ForEach-Object { if ([int]$_.id -eq $id) { $row } else { $_ } })
+        }
+        Save-MockPersistentState -State $this.State
+        return $this.GetUsers($Token)
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name DeleteUser -Value {
+        param([string]$Token, [int]$Id)
+        $admin = Mock-AssertAdmin -Repository $this -Token $Token
+        if ([int]$admin.id -eq $Id) { throw "不能删除当前登录的管理员账户" }
+        $this.State.systemUsers = @((Mock-GetSystemUsers -Repository $this) | Where-Object { [int]$_.id -ne $Id })
+        Save-MockPersistentState -State $this.State
+        return $this.GetUsers($Token)
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name ChangePassword -Value {
+        param([string]$Token, $Payload)
+        $current = Mock-GetSessionUser -Repository $this -Token $Token
+        $targetId = if ($Payload.id) { [int]$Payload.id } else { [int]$current.id }
+        $target = @((Mock-GetSystemUsers -Repository $this) | Where-Object { [int]$_.id -eq $targetId }) | Select-Object -First 1
+        if (-not $target) { throw "用户不存在" }
+        if ([int]$target.id -ne [int]$current.id -and $current.group -ne "系统管理员") { throw "只能修改自己的密码" }
+        if ([int]$target.id -eq [int]$current.id -and $current.group -ne "系统管理员" -and [string]$Payload.oldPassword -ne [string]$current.password) { throw "原密码不正确" }
+        if ([string]::IsNullOrWhiteSpace([string]$Payload.newPassword)) { throw "新密码不能为空" }
+        $target.password = [string]$Payload.newPassword
+        Save-MockPersistentState -State $this.State
+        return [ordered]@{ changed = $true }
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name GetUserGroups -Value {
+        return [ordered]@{ rows = @($this.State.userGroups | ForEach-Object { @{ group = $_ } }) }
     }
 
     return $repository

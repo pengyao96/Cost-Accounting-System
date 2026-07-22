@@ -152,6 +152,8 @@ function Write-HttpResponse {
         "Content-Type: $ContentType",
         "Content-Length: $($BodyBytes.Length)",
         "Connection: close",
+        "Cache-Control: no-store, max-age=0",
+        "Pragma: no-cache",
         "Access-Control-Allow-Origin: *",
         "Access-Control-Allow-Headers: Content-Type",
         "Access-Control-Allow-Methods: GET,POST,DELETE,OPTIONS",
@@ -239,6 +241,41 @@ function Handle-Api {
 
     if ($Request.Path -eq "/api/bootstrap") {
         Write-Json -Stream $Stream -Payload ($script:Repository.GetBootstrap())
+        return
+    }
+
+    if ($Request.Path -eq "/api/auth/login" -and $Request.Method -eq "POST") {
+        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        Write-Json -Stream $Stream -Payload ($script:Repository.Login($payload))
+        return
+    }
+
+    if ($Request.Path -eq "/api/auth/users" -and $Request.Method -eq "POST") {
+        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        Write-Json -Stream $Stream -Payload ($script:Repository.GetUsers([string]$payload.token))
+        return
+    }
+
+    if ($Request.Path -eq "/api/auth/users/save" -and $Request.Method -eq "POST") {
+        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        Write-Json -Stream $Stream -Payload ($script:Repository.SaveUser([string]$payload.token, $payload.user))
+        return
+    }
+
+    if ($Request.Path -eq "/api/auth/users/delete" -and $Request.Method -eq "POST") {
+        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        Write-Json -Stream $Stream -Payload ($script:Repository.DeleteUser([string]$payload.token, [int]$payload.id))
+        return
+    }
+
+    if ($Request.Path -eq "/api/auth/password" -and $Request.Method -eq "POST") {
+        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        Write-Json -Stream $Stream -Payload ($script:Repository.ChangePassword([string]$payload.token, $payload))
+        return
+    }
+
+    if ($Request.Path -eq "/api/auth/groups" -and $Request.Method -eq "GET") {
+        Write-Json -Stream $Stream -Payload ($script:Repository.GetUserGroups())
         return
     }
 

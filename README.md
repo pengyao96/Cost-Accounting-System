@@ -117,3 +117,9 @@
 - 用户关系管理
 - 用户管理
 - 用户组管理
+
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+cd D:\Code\Cost-Accounting-System\第二炼轧厂-bs
+.\stop-bs.ps1
+.\open-bs.ps1

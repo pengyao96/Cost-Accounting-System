@@ -7,6 +7,7 @@
   var API_BASE = (window.location.protocol === "http:" || window.location.protocol === "https:")
     ? window.location.origin + "/api"
     : "http://127.0.0.1:8091/api";
+  var DEBUG_AUTO_LOGIN = true;
 
   var navGroups = [
     {
@@ -143,8 +144,8 @@
         { id: "screen-management", label: "画面管理" },
         { id: "permission-management", label: "权限管理" },
         { id: "user-relation-management", label: "用户关系管理" },
-        { id: "user-management", label: "用户管理" },
-        { id: "user-group-management", label: "用户组管理" }
+        { id: "user-management", label: "用户管理", pageId: "user-management" },
+        { id: "user-group-management", label: "用户组管理", pageId: "user-group-management" }
       ]
     }
   ];
@@ -158,11 +159,14 @@
 
   var pageMenuPaths = {};
   indexMenuPages(navTree, []);
+  pageMap["user-management"] = { id: "user-management", title: "用户管理", kind: "userManagement" };
+  pageMap["user-group-management"] = { id: "user-group-management", title: "用户组管理", kind: "userGroups" };
 
   var state = {
     loading: true,
     error: "",
     currentPage: "dashboard",
+    session: null,
     expandedMenus: {},
     bootstrap: null,
     datasets: {},
@@ -188,11 +192,15 @@
     schedules: {
       lj: { startDate: "2026-07-15T08:00", loading: false, result: null },
       rz: { startDate: "2026-07-15T08:00", loading: false, result: null }
-    }
+    },
+    userManagement: { payload: null, draft: null, groups: [] }
   };
 
-  render();
-  initialize();
+  if (DEBUG_AUTO_LOGIN) {
+    loginWithCredentials("admin", "123456");
+  } else {
+    render();
+  }
 
   function initialize() {
     refreshBootstrap(function (error) {
@@ -290,6 +298,11 @@
     });
     render();
 
+    if (page.kind === "userManagement" || page.kind === "userGroups") {
+      loadUserManagement(function () { render(); });
+      return;
+    }
+
     if (page.kind === "localDataset") {
       ensureLocalDataset(page);
       return;
@@ -303,6 +316,11 @@
   }
 
   function render() {
+    if (!state.session) {
+      app.innerHTML = renderLogin();
+      bindEvents();
+      return;
+    }
     app.innerHTML = [
       '<div class="layout">',
       renderSidebar(),
@@ -390,6 +408,8 @@
       "<p>" + safe(describePage(page)) + "</p>",
       "</div>",
       '<div class="status-panel">',
+      '<span class="current-user">' + safe(state.session.user.account) + ' · ' + safe(state.session.user.group) + '</span>',
+      '<button class="logout-btn" data-action="logout">退出登录</button>',
       '<span class="pill">' + safe(system.currentProvider || "mock") + "</span>",
       '<span class="pill subtle">' + safe(system.sourceEntry || "") + "</span>",
       "</div>",
@@ -419,7 +439,32 @@
     if (page.kind === "schedule") {
       return renderSchedulePage(page);
     }
+    if (page.kind === "userManagement") {
+      return renderUserManagement();
+    }
+    if (page.kind === "userGroups") {
+      return renderUserGroups();
+    }
     return renderDatasetPage(page);
+  }
+
+  function renderLogin() {
+    return '<main class="login-shell"><section class="login-panel"><div class="login-logo"><img src="./assets/company-logo.jpeg" alt="公司图标"></div><div class="login-copy"><p>第二炼轧厂</p><h1>精量化成本核算系统</h1><span>请使用系统账户登录后继续操作</span></div><form class="login-form"><label>账户<input name="account" autocomplete="username" value="admin" placeholder="请输入账户"></label><label>密码<input name="password" type="password" autocomplete="current-password" value="123456" placeholder="请输入密码"></label><button class="primary-btn" type="button" data-action="login">登录系统</button><p class="login-tip">调试模式：默认管理员账户已自动登录；如需切换账户，请先退出登录。</p>' + (state.error ? '<p class="login-error">' + safe(state.error) + '</p>' : '') + '</form></section></main>';
+  }
+
+  function loginWithCredentials(account, password) {
+    state.loading = true;
+    render();
+    apiPost('/auth/login', { account: account, password: password }, function (error, result) {
+      if (error) {
+        state.loading = false;
+        state.error = error.message || '登录失败';
+        render();
+        return;
+      }
+      state.session = result;
+      initialize();
+    });
   }
 
   function renderLoading() {
@@ -652,7 +697,50 @@
     return html.join("");
   }
 
+  function renderUserManagement() {
+    var payload = state.userManagement.payload;
+    var isAdmin = payload && payload.isAdmin;
+    var rows = payload ? payload.rows || [] : [];
+    var draft = state.userManagement.draft || (rows[0] ? cloneRow(rows[0]) : { account: "", password: "", group: "" });
+    var groups = state.userManagement.groups || [];
+    var html = [];
+    html.push('<div class="two-column user-management"><section class="panel table-panel"><div class="panel-header"><h3>账户信息</h3><p>' + (isAdmin ? '系统管理员可维护全部账户、密码与组归属。' : '当前账户仅可查看本人信息并修改自己的密码。') + '</p></div>');
+    if (isAdmin) { html.push('<div class="toolbar"><button class="primary-btn" data-action="new-user">新增用户</button></div>'); }
+    html.push('<div class="table-wrap"><table><thead><tr><th>账户</th><th>当前密码</th><th>组归属</th></tr></thead><tbody>');
+    each(rows, function (row) { html.push('<tr class="' + (String(draft.id) === String(row.id) ? 'selected' : '') + '" data-user-row="' + safe(row.id) + '"><td>' + safe(row.account) + '</td><td class="password-cell">' + safe(row.password) + '</td><td>' + safe(row.group) + '</td></tr>'); });
+    html.push('</tbody></table></div></section><section class="panel"><div class="panel-header"><h3>' + (isAdmin ? '账户维护' : '我的账户') + '</h3><p>当前账号：' + safe(state.session.user.account) + ' · 组归属：' + safe(state.session.user.group) + '</p></div>');
+    html.push('<div class="editor-form"><label><span>账户</span><input name="user-account-' + safe(draft.id || 'new') + '" autocomplete="off" data-user-field="account" value="' + safeInputValue(draft.account) + '"' + (isAdmin ? '' : ' disabled') + '></label>');
+    if (isAdmin) { html.push('<label><span>密码</span><input name="user-password-' + safe(draft.id || 'new') + '" type="password" autocomplete="new-password" data-user-field="password" value="" placeholder="新建时必填；留空则保留原密码"></label><label><span>组归属</span><select data-user-field="group"><option value=""' + (draft.group ? '' : ' selected') + '>请选择用户组</option>' + groups.map(function (group) { return '<option value="' + safe(group) + '"' + (group === draft.group ? ' selected' : '') + '>' + safe(group) + '</option>'; }).join('') + '</select></label>'); }
+    html.push('<div class="form-actions">');
+    if (isAdmin) { html.push('<button class="primary-btn" data-action="save-user">保存账户</button><button class="danger-btn" data-action="delete-user"' + (draft.id ? '' : ' disabled') + '>删除账户</button>'); }
+    html.push('<button class="secondary-btn" data-action="show-password-form">修改密码</button></div></div>');
+    html.push('<div class="password-form ' + (state.userManagement.showPassword ? 'open' : '') + '"><label><span>原密码</span><input type="password" data-password-field="oldPassword"></label><label><span>新密码</span><input type="password" data-password-field="newPassword"></label><button class="primary-btn" data-action="change-password">确认修改</button></div>');
+    if (state.userManagement.message) { html.push('<div class="user-message ' + (state.userManagement.messageType === 'error' ? 'error' : '') + '">' + safe(state.userManagement.message) + '</div>'); }
+    html.push('</section></div>');
+    return html.join('');
+  }
+
+  function renderUserGroups() {
+    var groups = state.userManagement.groups || [];
+    var html = ['<section class="panel"><div class="panel-header"><h3>用户组管理</h3><p>当前已配置的用户组。用户组增删将在接入真实权限仓储后开放。</p></div><div class="group-grid">'];
+    each(groups, function (group) { html.push('<div class="group-item"><strong>' + safe(group) + '</strong><span>系统用户组</span></div>'); });
+    html.push('</div></section>');
+    return html.join('');
+  }
+
   function bindEvents() {
+    bindClick("[data-action='login']", function () {
+      var account = app.querySelector('[name="account"]');
+      var password = app.querySelector('[name="password"]');
+      loginWithCredentials(account ? account.value : '', password ? password.value : '');
+    });
+
+    bindClick("[data-action='logout']", function () {
+      state.session = null;
+      state.userManagement = { payload: null, draft: null, groups: [] };
+      render();
+    });
+
     bindClick("[data-menu-toggle]", function (button) {
       var menuId = button.getAttribute("data-menu-toggle");
       state.expandedMenus[menuId] = !state.expandedMenus[menuId];
@@ -846,6 +934,93 @@
     bindClick("[data-action='run-schedule']", function (button) {
       runSchedule(button.getAttribute("data-line"), true);
     });
+
+    bindClick("[data-user-row]", function (rowButton) {
+      var row = findRowById((state.userManagement.payload || {}).rows || [], rowButton.getAttribute('data-user-row'));
+      state.userManagement.draft = cloneRow(row);
+      state.userManagement.isCreating = false;
+      state.userManagement.showPassword = false;
+      render();
+    });
+
+    bindInputs('[data-user-field]', function (input) {
+      if (!state.userManagement.draft) { state.userManagement.draft = {}; }
+      state.userManagement.draft[input.getAttribute('data-user-field')] = input.value;
+    });
+
+    bindInputs('[data-password-field]', function (input) {
+      state.userManagement[input.getAttribute('data-password-field')] = input.value;
+    });
+
+    bindClick("[data-action='new-user']", function () {
+      state.userManagement.draft = { id: 0, account: '', password: '', group: '' };
+      state.userManagement.isCreating = true;
+      state.userManagement.showPassword = false;
+      state.userManagement.message = '';
+      render();
+    });
+
+    bindClick("[data-action='save-user']", function () {
+      apiPost('/auth/users/save', { token: state.session.token, user: state.userManagement.draft }, function (error) {
+        if (error) { showUserMessage(error.message || '账户保存失败', 'error'); return; }
+        state.userManagement.message = '账户已保存。';
+        state.userManagement.messageType = 'success';
+        if (state.userManagement.isCreating) {
+          state.userManagement.draft = { id: 0, account: '', password: '', group: '' };
+        }
+        loadUserManagement(function () { render(); });
+      });
+    });
+
+    bindClick("[data-action='delete-user']", function () {
+      var draft = state.userManagement.draft || {};
+      if (!draft.id) { return; }
+      apiPost('/auth/users/delete', { token: state.session.token, id: draft.id }, function (error) {
+        if (error) { showUserMessage(error.message || '账户删除失败', 'error'); return; }
+        state.userManagement.draft = null;
+        state.userManagement.isCreating = false;
+        state.userManagement.message = '账户已删除。';
+        state.userManagement.messageType = 'success';
+        loadUserManagement(function () { render(); });
+      });
+    });
+
+    bindClick("[data-action='show-password-form']", function () {
+      state.userManagement.showPassword = !state.userManagement.showPassword;
+      render();
+    });
+
+    bindClick("[data-action='change-password']", function () {
+      var draft = state.userManagement.draft || {};
+      apiPost('/auth/password', { token: state.session.token, id: draft.id, oldPassword: state.userManagement.oldPassword || '', newPassword: state.userManagement.newPassword || '' }, function (error) {
+        if (error) { showUserMessage(error.message || '密码修改失败', 'error'); return; }
+        state.userManagement.oldPassword = '';
+        state.userManagement.newPassword = '';
+        state.userManagement.showPassword = false;
+        window.alert('密码已修改');
+        render();
+      });
+    });
+  }
+
+  function loadUserManagement(callback) {
+    apiPost('/auth/users', { token: state.session.token }, function (error, payload) {
+      if (error) { done(callback, error); showError(error); return; }
+      state.userManagement.payload = payload;
+      if (!state.userManagement.isCreating && (!state.userManagement.draft || !findRowById(payload.rows || [], state.userManagement.draft.id))) {
+        state.userManagement.draft = cloneRow((payload.rows || [])[0] || {});
+      }
+      apiGet('/auth/groups', function (groupError, groupPayload) {
+        state.userManagement.groups = groupError ? [] : (groupPayload.rows || []).map(function (item) { return item.group; });
+        done(callback, groupError, payload);
+      });
+    });
+  }
+
+  function showUserMessage(message, type) {
+    state.userManagement.message = message;
+    state.userManagement.messageType = type || 'error';
+    render();
   }
 
   function runCost() {

@@ -68,6 +68,8 @@
 3. 仓储对象目前由 `mock-repository.ps1` 提供伪数据
 4. 后续再把 `repository.ps1` 切到 SQL Server 实现
 
+当前 Mock 仓储会把在线维护的数据保存到 `backend/data/mock-state.json`。服务重启时会恢复这份状态文件；该文件不存在或无法读取时则回退到种子数据。后续接入 SQL Server 时，只需新增 `sql-repository.ps1` 并实现与 Mock 仓储一致的方法，不需要重写前端 API 或页面。
+
 也就是说，未来如果要接真库，优先改这里：
 
 - [backend/providers/repository.ps1](D:\Code\精量化成本核算系统\第二炼轧厂-bs\backend\providers\repository.ps1)
