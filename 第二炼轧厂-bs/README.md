@@ -70,6 +70,12 @@
 
 当前 Mock 仓储会把在线维护的数据保存到 `backend/data/mock-state.json`。服务重启时会恢复这份状态文件；该文件不存在或无法读取时则回退到种子数据。后续接入 SQL Server 时，只需新增 `sql-repository.ps1` 并实现与 Mock 仓储一致的方法，不需要重写前端 API 或页面。
 
+## SQL Server 初始化
+
+1. 复制 `backend/config.example.ps1` 为 `backend/config.local.ps1`，填写 SQL 身份验证连接串。
+2. 运行 `powershell -ExecutionPolicy Bypass -File .\backend\initialize-sql.ps1` 创建 `SecondRollingCost`、用户组表和用户表。
+3. 运行 `powershell -ExecutionPolicy Bypass -File .\open-bs.ps1 -Provider sqlserver` 以 SQL 用户模块启动系统。
+
 也就是说，未来如果要接真库，优先改这里：
 
 - [backend/providers/repository.ps1](D:\Code\精量化成本核算系统\第二炼轧厂-bs\backend\providers\repository.ps1)

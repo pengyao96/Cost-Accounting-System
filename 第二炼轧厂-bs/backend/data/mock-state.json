@@ -1,6 +1,6 @@
 ﻿{
     "version":  1,
-    "savedAt":  "2026-07-22T16:07:20",
+    "savedAt":  "2026-07-23T08:29:25",
     "datasets":  {
                      "steelmakingGrades":  [
                                                {
@@ -770,6 +770,22 @@
                             "id":  4,
                             "group":  "财务科",
                             "password":  "123456"
+                        },
+                        {
+                            "id":  5,
+                            "account":  "11",
+                            "name":  "12",
+                            "phone":  "232323232",
+                            "password":  "2121",
+                            "group":  "系统管理员"
+                        },
+                        {
+                            "id":  6,
+                            "account":  "gouzi",
+                            "name":  "狗子",
+                            "phone":  "18801213035",
+                            "password":  "998877",
+                            "group":  "系统管理员"
                         }
                     ],
     "userGroups":  [

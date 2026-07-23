@@ -9,9 +9,13 @@
 # Local service state and runtime data
 第二炼轧厂-bs/.bs-server.pid
 第二炼轧厂-bs/backend/data/
+第二炼轧厂-bs/backend/config.local.ps1
 *.log
 *.tmp
 *.bak
+*.mdf
+*.ndf
+*.ldf
 
 # Editor and operating-system files
 .vscode/

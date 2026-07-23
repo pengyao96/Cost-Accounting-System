@@ -1,5 +1,7 @@
 param(
-    [switch]$NoBrowser
+    [switch]$NoBrowser,
+    [ValidateSet("mock", "sqlserver")]
+    [string]$Provider = "mock"
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,7 +40,7 @@ function Get-RunningProcess {
 
 $running = Get-RunningProcess -Path $pidFile
 if (-not $running -or -not (Test-ServerAlive -Url $baseUrl)) {
-    $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$serverScript`" -Port $port" -WindowStyle Hidden -PassThru
+    $process = Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$serverScript`" -Port $port -Provider $Provider" -WindowStyle Hidden -PassThru
     Set-Content -Path $pidFile -Value $process.Id -Encoding UTF8
     $started = $false
     foreach ($i in 1..12) {
@@ -49,7 +51,7 @@ if (-not $running -or -not (Test-ServerAlive -Url $baseUrl)) {
         }
     }
     if (-not $started) {
-        throw "Second Lianzha B/S mock API failed to start. Run backend/server.ps1 manually for logs."
+        throw "Second Lianzha B/S $Provider API failed to start. Run backend/server.ps1 manually for logs."
     }
 }
 
