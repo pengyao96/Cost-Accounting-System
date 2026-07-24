@@ -17,9 +17,6 @@
     {
       label: "1780 精量化成本",
       items: [
-        { id: "steelGrades", title: "基础数据：钢种与系列", kind: "dataset", dataset: "steelGrades" },
-        { id: "thicknessRules", title: "基础数据：厚度索引", kind: "dataset", dataset: "thicknessRules" },
-        { id: "widthRules", title: "基础数据：宽度索引", kind: "dataset", dataset: "widthRules" },
         { id: "planPriceRz", title: "基础数据：板坯计划价", kind: "dataset", dataset: "planPriceRz" },
         { id: "samplePriceRz", title: "基础数据：试样/包装费", kind: "dataset", dataset: "samplePriceRz" },
         { id: "rzActuals", title: "实绩：准发与轧制实绩", kind: "dataset", dataset: "rzActuals" },
@@ -30,7 +27,6 @@
     {
       label: "炉卷 精量化成本",
       items: [
-        { id: "consumeProducts", title: "基础数据：消耗产品与分摊", kind: "dataset", dataset: "consumeProducts" },
         { id: "shareRules", title: "基础数据：分摊规则", kind: "dataset", dataset: "shareRules" },
         { id: "planPriceLj", title: "基础数据：板坯计划价", kind: "dataset", dataset: "planPriceLj" },
         { id: "samplePriceLj", title: "基础数据：试样加工费", kind: "dataset", dataset: "samplePriceLj" },
@@ -45,7 +41,6 @@
       items: [
         { id: "steelmakingGrades", title: "基础数据：钢种与系列", kind: "dataset", dataset: "steelmakingGrades" },
         { id: "steelmakingRoutes", title: "基础数据：路径表", kind: "dataset", dataset: "steelmakingRoutes" },
-        { id: "steelmakingProducts", title: "基础数据：消耗产品", kind: "dataset", dataset: "steelmakingProducts" },
         { id: "steelmakingPrices", title: "基础数据：计划价与水平附加", kind: "dataset", dataset: "steelmakingPrices" },
         { id: "steelmakingActuals", title: "实绩：转炉、精炼与连铸", kind: "dataset", dataset: "steelmakingActuals" },
         { id: "steelmakingFixedConsumption", title: "实绩：固定消耗", kind: "dataset", dataset: "steelmakingFixedConsumption" }
@@ -67,33 +62,33 @@
       id: "basic-data",
       label: "基础数据",
       children: [
-        { id: "heat-treatment", label: "热处理要求" },
+        { id: "heat-treatment", label: "热处理要求", pageId: "heat-treatment" },
         {
           id: "steel-grades", label: "钢种", children: [
-            { id: "slab-grades", label: "板坯钢种", pageId: "steelmakingGrades" },
-            { id: "plate-grades", label: "钢板钢种", pageId: "steelGrades" },
-            { id: "coil-grades", label: "钢卷钢种", pageId: "steelGrades" }
+            { id: "slab-grades", label: "板坯钢种", pageId: "slab-grades" },
+            { id: "plate-grades", label: "钢板钢种", pageId: "plate-grades" },
+            { id: "coil-grades", label: "钢卷钢种", pageId: "coil-grades" }
           ]
         },
         {
           id: "thickness-index", label: "厚度索引", children: [
-            { id: "slab-thickness", label: "板坯厚度索引", pageId: "thicknessRules" },
-            { id: "plate-thickness", label: "钢板厚度索引", pageId: "thicknessRules" },
-            { id: "coil-thickness", label: "钢卷厚度索引", pageId: "thicknessRules" }
+            { id: "slab-thickness", label: "板坯厚度索引", pageId: "slab-thickness" },
+            { id: "plate-thickness", label: "钢板厚度索引", pageId: "plate-thickness" },
+            { id: "coil-thickness", label: "钢卷厚度索引", pageId: "coil-thickness" }
           ]
         },
         {
           id: "width-index", label: "宽度索引", children: [
-            { id: "slab-width", label: "板坯宽度索引", pageId: "widthRules" },
-            { id: "plate-width", label: "钢板宽度索引", pageId: "widthRules" },
-            { id: "coil-width", label: "钢卷宽度索引", pageId: "widthRules" }
+            { id: "slab-width", label: "板坯宽度索引", pageId: "slab-width" },
+            { id: "plate-width", label: "钢板宽度索引", pageId: "plate-width" },
+            { id: "coil-width", label: "钢卷宽度索引", pageId: "coil-width" }
           ]
         },
-        { id: "length-index", label: "长度索引", children: [{ id: "slab-length", label: "板坯长度索引" }, { id: "plate-length", label: "钢板长度索引" }] },
-        { id: "process-route", label: "工艺路径", pageId: "steelmakingRoutes" },
-        { id: "wage-equipment", label: "工资设备系数" },
-        { id: "consumption-type", label: "消耗类型", children: [{ id: "steelmaking-consumption-type", label: "炼钢消耗类型", pageId: "steelmakingProducts" }, { id: "rolling-consumption-type", label: "轧钢消耗类型", pageId: "consumeProducts" }] },
-        { id: "consumable-product", label: "耗材产品", children: [{ id: "rz-consumable", label: "1780 耗材产品", pageId: "consumeProducts" }, { id: "steelmaking-consumable", label: "炼钢耗材产品", pageId: "steelmakingProducts" }, { id: "lj-consumable", label: "炉卷耗材产品", pageId: "consumeProducts" }] }
+        { id: "length-index", label: "长度索引", children: [{ id: "slab-length", label: "板坯长度索引", pageId: "slab-length" }, { id: "plate-length", label: "钢板长度索引", pageId: "plate-length" }] },
+        { id: "process-route", label: "工艺路径", pageId: "process-route" },
+        { id: "wage-equipment", label: "工资设备系数", pageId: "wage-equipment" },
+        { id: "consumption-type", label: "消耗类型", children: [{ id: "steelmaking-consumption-type", label: "炼钢消耗类型", pageId: "steelmaking-consumption-type" }, { id: "rolling-consumption-type", label: "轧钢消耗类型", pageId: "rolling-consumption-type" }] },
+        { id: "consumable-product", label: "耗材产品", children: [{ id: "rz-consumable", label: "1780 耗材产品", pageId: "rz-consumable" }, { id: "steelmaking-consumable", label: "炼钢耗材产品", pageId: "steelmaking-consumable" }, { id: "lj-consumable", label: "炉卷耗材产品", pageId: "lj-consumable" }] }
       ]
     },
     {
@@ -161,6 +156,25 @@
   indexMenuPages(navTree, []);
   pageMap["user-management"] = { id: "user-management", title: "用户管理", kind: "userManagement" };
   pageMap["user-group-management"] = { id: "user-group-management", title: "用户组管理", kind: "userGroups" };
+  pageMap["heat-treatment"] = { id: "heat-treatment", title: "热处理要求", kind: "dataset", dataset: "heatTreatmentRequirements" };
+  pageMap["slab-grades"] = { id: "slab-grades", title: "板坯钢种", kind: "dataset", dataset: "slabGrades" };
+  pageMap["plate-grades"] = { id: "plate-grades", title: "钢板钢种", kind: "dataset", dataset: "plateGrades" };
+  pageMap["coil-grades"] = { id: "coil-grades", title: "钢卷钢种", kind: "dataset", dataset: "coilGrades" };
+  pageMap["slab-thickness"] = { id: "slab-thickness", title: "板坯厚度索引", kind: "dataset", dataset: "slabThicknessIndexes" };
+  pageMap["plate-thickness"] = { id: "plate-thickness", title: "钢板厚度索引", kind: "dataset", dataset: "plateThicknessIndexes" };
+  pageMap["coil-thickness"] = { id: "coil-thickness", title: "钢卷厚度索引", kind: "dataset", dataset: "coilThicknessIndexes" };
+  pageMap["slab-width"] = { id: "slab-width", title: "板坯宽度索引", kind: "dataset", dataset: "slabWidthIndexes" };
+  pageMap["plate-width"] = { id: "plate-width", title: "钢板宽度索引", kind: "dataset", dataset: "plateWidthIndexes" };
+  pageMap["coil-width"] = { id: "coil-width", title: "钢卷宽度索引", kind: "dataset", dataset: "coilWidthIndexes" };
+  pageMap["slab-length"] = { id: "slab-length", title: "板坯长度索引", kind: "dataset", dataset: "slabLengthIndexes" };
+  pageMap["plate-length"] = { id: "plate-length", title: "钢板长度索引", kind: "dataset", dataset: "plateLengthIndexes" };
+  pageMap["process-route"] = { id: "process-route", title: "工艺路径", kind: "dataset", dataset: "steelmakingPaths" };
+  pageMap["wage-equipment"] = { id: "wage-equipment", title: "工资设备系数", kind: "dataset", dataset: "wageEquipmentCoefficients" };
+  pageMap["steelmaking-consumption-type"] = { id: "steelmaking-consumption-type", title: "炼钢消耗类型", kind: "dataset", dataset: "steelmakingConsumptionTypes" };
+  pageMap["rolling-consumption-type"] = { id: "rolling-consumption-type", title: "轧钢消耗类型", kind: "dataset", dataset: "rollingConsumptionTypes" };
+  pageMap["rz-consumable"] = { id: "rz-consumable", title: "1780 耗材产品", kind: "dataset", dataset: "rollingConsumableProducts" };
+  pageMap["steelmaking-consumable"] = { id: "steelmaking-consumable", title: "炼钢耗材产品", kind: "dataset", dataset: "steelmakingConsumableProducts" };
+  pageMap["lj-consumable"] = { id: "lj-consumable", title: "炉卷耗材产品", kind: "dataset", dataset: "coilConsumableProducts" };
   var LAST_PAGE_STORAGE_KEY = "second-rolling-last-page";
   var SESSION_STORAGE_KEY = "second-rolling-session";
 
@@ -534,9 +548,9 @@
     var notices = state.bootstrap && state.bootstrap.notices ? state.bootstrap.notices : [];
     var system = state.bootstrap && state.bootstrap.system ? state.bootstrap.system : {};
     var cards = [
-      { label: "1780 数据", value: countValues(["steelGrades", "thicknessRules", "widthRules", "planPriceRz", "rzActuals"], datasets), note: "基础、实绩、成本计算" },
-      { label: "炉卷数据", value: countValues(["consumeProducts", "shareRules", "planPriceLj", "ljActuals", "otherConsumptions"], datasets), note: "基础、实绩、时刻表" },
-      { label: "炼钢数据", value: countValues(["steelmakingGrades", "steelmakingRoutes", "steelmakingProducts", "steelmakingActuals", "steelmakingFixedConsumption"], datasets), note: "基础、实绩、水平附加" },
+      { label: "1780 数据", value: countValues(["slabGrades", "plateGrades", "coilGrades", "rollingConsumableProducts", "rzActuals"], datasets), note: "基础、实绩、成本计算" },
+      { label: "炉卷数据", value: countValues(["coilThicknessIndexes", "coilWidthIndexes", "coilConsumableProducts", "ljActuals", "otherConsumptions"], datasets), note: "基础、实绩、时刻表" },
+      { label: "炼钢数据", value: countValues(["steelmakingPaths", "steelmakingConsumptionTypes", "steelmakingConsumableProducts", "steelmakingActuals", "steelmakingFixedConsumption"], datasets), note: "基础、实绩、水平附加" },
       { label: "后端提供者", value: system.currentProvider || "-", note: "未来可切到 sqlserver" }
     ];
     var html = [];
@@ -600,7 +614,7 @@
     draft = state.drafts[page.dataset] || cloneRow(selectedRow || makeEmptyRow(columns));
 
     html.push('<div class="two-column">');
-    html.push('<section class="panel table-panel"><div class="panel-header"><h3>' + safe(meta.title || page.title) + "</h3><p>" + safe(meta.description || "") + '</p></div>');
+    html.push('<section class="panel table-panel"><div class="panel-header"><h3>' + safe(meta.title || page.title) + "</h3><p>" + safe(meta.description || "") + (meta.tableName ? ' <span class="table-reference">数据库表：' + safe(meta.tableName) + '</span>' : '') + '</p></div>');
     html.push('<div class="toolbar"><button class="primary-btn" data-action="reload-dataset" data-dataset="' + safe(page.dataset) + '">刷新</button>');
     if (!meta.readonly) {
       html.push('<button class="secondary-btn" data-action="new-row" data-dataset="' + safe(page.dataset) + '">新建</button>');

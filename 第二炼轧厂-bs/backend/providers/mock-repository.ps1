@@ -79,6 +79,7 @@ function Mock-GetDatasetMeta {
     return [ordered]@{
         title = $config.title
         description = $config.description
+        tableName = $config.tableName
         readonly = [bool]$config.readonly
         collectable = [bool]$config.collectable
         count = $rows.Count

@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $configPath = Join-Path $PSScriptRoot "config.local.ps1"
 $migrationDirectory = Join-Path (Split-Path -Parent $PSScriptRoot) "database"
@@ -16,6 +16,28 @@ $connection.Open()
 try {
     $migrationPaths = Get-ChildItem -Path $migrationDirectory -Filter "*.sql" -File | Sort-Object Name
     foreach ($migrationPath in $migrationPaths) {
+        $finalTableByMigration = @{
+            "003-heat-treatment-requirements.sql" = "yclyq"
+            "004-grade-datasets.sql" = "lggrade"
+            "006-thickness-indexes.sql" = "lgthick"
+        }
+        if ($migrationPath.Name -eq "004-grade-datasets.sql") {
+            $schemaCheck = $connection.CreateCommand()
+            $schemaCheck.CommandText = "SELECT CASE WHEN EXISTS (SELECT 1 FROM SecondRollingCost.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'dbo' AND TABLE_NAME IN (N'lggradeForm', N'lggrade') AND COLUMN_NAME = N'钢种') THEN 1 ELSE 0 END"
+            if ([System.Convert]::ToInt32($schemaCheck.ExecuteScalar()) -eq 1) {
+                Write-Host "Skipping 004-grade-datasets.sql because grade columns are already installed."
+                continue
+            }
+        }
+        if ($migrationPath.Name -ne "004-grade-datasets.sql" -and $finalTableByMigration.ContainsKey($migrationPath.Name)) {
+            $schemaCheck = $connection.CreateCommand()
+            $finalTable = $finalTableByMigration[$migrationPath.Name]
+            $schemaCheck.CommandText = "SELECT CASE WHEN EXISTS (SELECT 1 FROM SecondRollingCost.INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = N'dbo' AND TABLE_NAME = N'$finalTable') THEN 1 ELSE 0 END"
+            if ([System.Convert]::ToInt32($schemaCheck.ExecuteScalar()) -eq 1) {
+                Write-Host "Skipping $($migrationPath.Name) because final table $finalTable is already installed."
+                continue
+            }
+        }
         $script = Get-Content -Raw -Encoding UTF8 $migrationPath.FullName
         $batches = $script -split '(?im)^\s*GO\s*$'
         foreach ($batch in $batches) {

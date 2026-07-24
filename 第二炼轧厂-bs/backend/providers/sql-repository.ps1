@@ -103,6 +103,100 @@ function Get-SqlSessionUser {
     return $user
 }
 
+function Get-SqlHeatTreatmentDataset {
+    param([string]$ConnectionString)
+    $rows = Invoke-SqlRows $ConnectionString "SELECT id, rclyq, rclms FROM dbo.yclyq ORDER BY id"
+    return [ordered]@{
+        name = "heatTreatmentRequirements"
+        rows = $rows
+        meta = [ordered]@{
+            title = "热处理要求"
+            description = "热处理代码与要求说明"
+            readonly = $false
+            collectable = $false
+            count = $rows.Count
+            tableName = "yclyq"
+            columns = @("id", "rclyq", "rclms")
+        }
+    }
+}
+
+function Get-SqlGradeDatasetDefinition {
+    param([string]$Name)
+    switch ($Name) {
+        "slabGrades" { return @{ table = "lggrade"; title = "板坯钢种"; description = "板坯钢种、系列与品种" } }
+        "plateGrades" { return @{ table = "ljgrade"; title = "钢板钢种"; description = "钢板钢种、品种与系列" } }
+        "coilGrades" { return @{ table = "rzgrade"; title = "钢卷钢种"; description = "钢卷钢种、品种与系列" } }
+        default { return $null }
+    }
+}
+
+function Get-SqlGradeDataset {
+    param([string]$ConnectionString, [string]$Name)
+    $definition = Get-SqlGradeDatasetDefinition $Name
+    if (-not $definition) { throw "Unsupported grade dataset: $Name" }
+    $rows = Invoke-SqlRows $ConnectionString "SELECT id, [钢种], [品种], [系列] FROM dbo.$($definition.table) ORDER BY id"
+    return [ordered]@{
+        name = $Name
+        rows = $rows
+        meta = [ordered]@{ title = $definition.title; description = $definition.description; tableName = $definition.table; readonly = $false; collectable = $false; count = $rows.Count; columns = @("id", "钢种", "品种", "系列") }
+    }
+}
+
+function Get-SqlThicknessDatasetDefinition {
+    param([string]$Name)
+    switch ($Name) {
+        "slabThicknessIndexes" { return @{ table = "lgthick"; title = "板坯厚度索引"; description = "板坯厚度索引，当前按设计保持空表" } }
+        "plateThicknessIndexes" { return @{ table = "ljthick"; title = "钢板厚度索引"; description = "钢板厚度索引" } }
+        "coilThicknessIndexes" { return @{ table = "thick"; title = "钢卷厚度索引"; description = "钢卷厚度索引" } }
+        default { return $null }
+    }
+}
+
+function Get-SqlThicknessDataset {
+    param([string]$ConnectionString, [string]$Name)
+    $definition = Get-SqlThicknessDatasetDefinition $Name
+    if (-not $definition) { throw "Unsupported thickness dataset: $Name" }
+    $rows = Invoke-SqlRows $ConnectionString "SELECT id, [厚度索引], [厚度起], [厚度尾], [厚度范围] FROM dbo.$($definition.table) ORDER BY TRY_CONVERT(INT, [厚度索引]), id"
+    return [ordered]@{
+        name = $Name
+        rows = $rows
+        meta = [ordered]@{ title = $definition.title; description = $definition.description; tableName = $definition.table; readonly = $false; collectable = $false; count = $rows.Count; columns = @("id", "厚度索引", "厚度起", "厚度尾", "厚度范围") }
+    }
+}
+
+function Get-SqlAdditionalBasicDatasetDefinition {
+    param([string]$Name)
+    switch ($Name) {
+        "slabWidthIndexes" { return @{ table = "lgwidth"; title = "板坯宽度索引"; description = "板坯宽度索引，当前按设计保持空表"; columns = @("宽度索引", "起始", "结束") } }
+        "plateWidthIndexes" { return @{ table = "ljwidth"; title = "钢板宽度索引"; description = "钢板宽度索引"; columns = @("宽度索引", "起始", "结束") } }
+        "coilWidthIndexes" { return @{ table = "width"; title = "钢卷宽度索引"; description = "钢卷宽度索引"; columns = @("宽度索引", "起始", "结束") } }
+        "slabLengthIndexes" { return @{ table = "lgslablen"; title = "板坯长度索引"; description = "板坯长度索引"; columns = @("序号", "长度起始", "长度终止") } }
+        "plateLengthIndexes" { return @{ table = "ljpatlen"; title = "钢板长度索引"; description = "钢板长度索引"; columns = @("序号", "长度起始", "长度终止") } }
+        "steelmakingPaths" { return @{ table = "lgpath"; title = "工艺路径"; description = "炼钢工艺路径"; columns = @("path_idx", "zlpath", "jlpath", "lzpath") } }
+        "wageEquipmentCoefficients" { return @{ table = "lggongzishebeixishu"; title = "工资设备系数"; description = "区域工资与设备系数"; columns = @("区域", "工资系数", "设备系数") } }
+        "steelmakingConsumptionTypes" { return @{ table = "lgxhlx"; title = "炼钢消耗类型"; description = "炼钢及连铸消耗类型"; columns = @("hno", "bno", "cp", "dj", "分摊类型", "区域", "列名") } }
+        "rollingConsumptionTypes" { return @{ table = "xhlx"; title = "轧钢消耗类型"; description = "轧钢消耗类型"; columns = @("序号", "消耗类型") } }
+        "rollingConsumableProducts" { return @{ table = "hccp"; title = "1780 耗材产品"; description = "1780 生产线耗材产品及分摊配置"; columns = @("hno", "bno", "cp", "日核算类型", "分摊类型", "列名") } }
+        "steelmakingConsumableProducts" { return @{ table = "lghccp"; title = "炼钢耗材产品"; description = "炼钢耗材产品分类"; columns = @("bno", "消耗") } }
+        "coilConsumableProducts" { return @{ table = "ljhccp"; title = "炉卷耗材产品"; description = "炉卷生产线耗材产品及分摊配置"; columns = @("hno", "bno", "cp", "日核算类型", "分摊类型", "列名") } }
+        default { return $null }
+    }
+}
+
+function Get-SqlAdditionalBasicDataset {
+    param([string]$ConnectionString, [string]$Name)
+    $definition = Get-SqlAdditionalBasicDatasetDefinition $Name
+    if (-not $definition) { throw "Unsupported basic dataset: $Name" }
+    $columnsSql = ($definition.columns | ForEach-Object { "[$_]" }) -join ", "
+    $rows = Invoke-SqlRows $ConnectionString "SELECT id, $columnsSql FROM dbo.$($definition.table) ORDER BY id"
+    return [ordered]@{
+        name = $Name
+        rows = $rows
+        meta = [ordered]@{ title = $definition.title; description = $definition.description; tableName = $definition.table; readonly = $false; collectable = $false; count = $rows.Count; columns = @("id") + @($definition.columns) }
+    }
+}
+
 function ConvertTo-SqlPublicUser {
     param($Row)
     return [ordered]@{ id = [int]$Row.id; account = [string]$Row.account; name = [string]$Row.name; phone = [string]$Row.phone; displayName = if ($Row.name) { [string]$Row.name } else { [string]$Row.account }; password = [string]$Row.password_plain; group = [string]$Row.group }
@@ -135,9 +229,128 @@ function New-SqlRepository {
 
     $repository | Add-Member -MemberType ScriptMethod -Name GetBootstrap -Force -Value {
         $datasets = [ordered]@{}
-        foreach ($name in $this.State.datasets.Keys) { $datasets[$name] = Mock-GetDatasetMeta -Repository $this -Name $name }
+        foreach ($name in $this.State.datasets.Keys) {
+            $datasets[$name] = if ($name -eq "heatTreatmentRequirements") { (Get-SqlHeatTreatmentDataset $this.SqlConnectionString).meta } elseif (Get-SqlGradeDatasetDefinition $name) { (Get-SqlGradeDataset $this.SqlConnectionString $name).meta } elseif (Get-SqlThicknessDatasetDefinition $name) { (Get-SqlThicknessDataset $this.SqlConnectionString $name).meta } elseif (Get-SqlAdditionalBasicDatasetDefinition $name) { (Get-SqlAdditionalBasicDataset $this.SqlConnectionString $name).meta } else { Mock-GetDatasetMeta -Repository $this -Name $name }
+        }
         $this.State.system.currentProvider = "sqlserver"
         return [ordered]@{ system = $this.State.system; notices = $this.State.notices; modules = $this.State.modules; datasets = $datasets }
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name GetDataset -Force -Value {
+        param([string]$Name)
+        if ($Name -eq "heatTreatmentRequirements") { return Get-SqlHeatTreatmentDataset $this.SqlConnectionString }
+        if (Get-SqlGradeDatasetDefinition $Name) { return Get-SqlGradeDataset $this.SqlConnectionString $Name }
+        if (Get-SqlThicknessDatasetDefinition $Name) { return Get-SqlThicknessDataset $this.SqlConnectionString $Name }
+        if (Get-SqlAdditionalBasicDatasetDefinition $Name) { return Get-SqlAdditionalBasicDataset $this.SqlConnectionString $Name }
+        $rows = Mock-GetDatasetRows -Repository $this -Name $Name
+        return [ordered]@{ name = $Name; rows = $rows; meta = Mock-GetDatasetMeta -Repository $this -Name $Name }
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name SaveDatasetRow -Force -Value {
+        param([string]$Name, $Payload)
+        if (Get-SqlGradeDatasetDefinition $Name) {
+            $definition = Get-SqlGradeDatasetDefinition $Name
+            $id = [int]$Payload.id; $grade = [string]$Payload.钢种; $product = [string]$Payload.品种; $series = [string]$Payload.系列
+            if ([string]::IsNullOrWhiteSpace($grade) -or [string]::IsNullOrWhiteSpace($series)) { throw "钢种和系列不能为空" }
+            try {
+                if ($id -eq 0) {
+                    [void](Invoke-SqlScalar $this.SqlConnectionString "INSERT dbo.$($definition.table)([钢种], [品种], [系列]) VALUES(@grade, @product, @series); SELECT CAST(SCOPE_IDENTITY() AS int)" @{ "@grade" = $grade; "@product" = $product; "@series" = $series })
+                } else {
+                    Invoke-SqlNonQuery $this.SqlConnectionString "UPDATE dbo.$($definition.table) SET [钢种]=@grade, [品种]=@product, [系列]=@series, updated_at=SYSDATETIME() WHERE id=@id" @{ "@id" = $id; "@grade" = $grade; "@product" = $product; "@series" = $series }
+                }
+            } catch { throw "钢种保存失败：钢种代码不能重复" }
+            $result = Get-SqlGradeDataset $this.SqlConnectionString $Name
+            $result.saved = @($result.rows | Where-Object { $_.钢种 -eq $grade } | Select-Object -First 1)
+            return $result
+        }
+        if (Get-SqlThicknessDatasetDefinition $Name) {
+            $definition = Get-SqlThicknessDatasetDefinition $Name
+            $id = [int]$Payload.id; $index = [string]$Payload.厚度索引
+            $start = if ([string]::IsNullOrWhiteSpace([string]$Payload.厚度起)) { $null } else { [decimal]$Payload.厚度起 }
+            $end = if ([string]::IsNullOrWhiteSpace([string]$Payload.厚度尾)) { $null } else { [decimal]$Payload.厚度尾 }
+            $range = if ([string]::IsNullOrWhiteSpace([string]$Payload.厚度范围)) { $null } else { [string]$Payload.厚度范围 }
+            if ([string]::IsNullOrWhiteSpace($index)) { throw "厚度索引不能为空" }
+            try {
+                if ($id -eq 0) {
+                    [void](Invoke-SqlScalar $this.SqlConnectionString "INSERT dbo.$($definition.table)([厚度索引], [厚度起], [厚度尾], [厚度范围]) VALUES(@index, @start, @end, @range); SELECT CAST(SCOPE_IDENTITY() AS int)" @{ "@index" = $index; "@start" = $start; "@end" = $end; "@range" = $range })
+                } else {
+                    Invoke-SqlNonQuery $this.SqlConnectionString "UPDATE dbo.$($definition.table) SET [厚度索引]=@index, [厚度起]=@start, [厚度尾]=@end, [厚度范围]=@range, updated_at=SYSDATETIME() WHERE id=@id" @{ "@id" = $id; "@index" = $index; "@start" = $start; "@end" = $end; "@range" = $range }
+                }
+            } catch { throw "厚度索引保存失败：索引不能重复" }
+            $result = Get-SqlThicknessDataset $this.SqlConnectionString $Name
+            $result.saved = @($result.rows | Where-Object { $_.厚度索引 -eq $index } | Select-Object -First 1)
+            return $result
+        }
+        if (Get-SqlAdditionalBasicDatasetDefinition $Name) {
+            $definition = Get-SqlAdditionalBasicDatasetDefinition $Name
+            $id = [int]$Payload.id; $columns = @($definition.columns); $parameters = @{}
+            for ($index = 0; $index -lt $columns.Count; $index += 1) {
+                $property = $Payload.PSObject.Properties[$columns[$index]]
+                $value = if ($property) { $property.Value } else { $null }
+                if ($index -eq 0 -and [string]::IsNullOrWhiteSpace([string]$value)) { throw "$($columns[0])不能为空" }
+                if ($index -gt 0 -and [string]::IsNullOrWhiteSpace([string]$value)) { $value = $null }
+                $parameters["@p$index"] = $value
+            }
+            $columnsSql = ($columns | ForEach-Object { "[$_]" }) -join ", "
+            if ($id -eq 0) {
+                $parameterSql = (0..($columns.Count - 1) | ForEach-Object { "@p$_" }) -join ", "
+                $newId = Invoke-SqlScalar $this.SqlConnectionString "INSERT dbo.$($definition.table)($columnsSql) VALUES($parameterSql); SELECT CAST(SCOPE_IDENTITY() AS int)" $parameters
+                $savedId = [int]$newId
+            } else {
+                $sets = (0..($columns.Count - 1) | ForEach-Object { "[$($columns[$_])] = @p$_" }) -join ", "
+                $parameters["@id"] = $id
+                Invoke-SqlNonQuery $this.SqlConnectionString "UPDATE dbo.$($definition.table) SET $sets, updated_at=SYSDATETIME() WHERE id=@id" $parameters
+                $savedId = $id
+            }
+            $result = Get-SqlAdditionalBasicDataset $this.SqlConnectionString $Name
+            $result.saved = @($result.rows | Where-Object { [int]$_.id -eq $savedId } | Select-Object -First 1)
+            return $result
+        }
+        if ($Name -ne "heatTreatmentRequirements") {
+            $row = Mock-SaveRow -Repository $this -Name $Name -Payload $Payload
+            Save-MockPersistentState -State $this.State
+            $result = $this.GetDataset($Name)
+            $result.saved = $row
+            return $result
+        }
+        $id = [int]$Payload.id; $code = [string]$Payload.rclyq; $description = [string]$Payload.rclms
+        if ([string]::IsNullOrWhiteSpace($code) -or [string]::IsNullOrWhiteSpace($description)) { throw "rclyq 和 rclms 均不能为空" }
+        try {
+            if ($id -eq 0) {
+                [void](Invoke-SqlScalar $this.SqlConnectionString "INSERT dbo.yclyq(rclyq, rclms) VALUES(@rclyq, @rclms); SELECT CAST(SCOPE_IDENTITY() AS int)" @{ "@rclyq" = $code; "@rclms" = $description })
+            } else {
+                Invoke-SqlNonQuery $this.SqlConnectionString "UPDATE dbo.yclyq SET rclyq=@rclyq, rclms=@rclms, updated_at=SYSDATETIME() WHERE id=@id" @{ "@id" = $id; "@rclyq" = $code; "@rclms" = $description }
+            }
+        } catch { throw "热处理要求保存失败：代码不能重复" }
+        $result = Get-SqlHeatTreatmentDataset $this.SqlConnectionString
+        $result.saved = @($result.rows | Where-Object { $_.rclyq -eq $code } | Select-Object -First 1)
+        return $result
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name DeleteDatasetRow -Force -Value {
+        param([string]$Name, [int]$Id)
+        if (Get-SqlGradeDatasetDefinition $Name) {
+            $definition = Get-SqlGradeDatasetDefinition $Name
+            Invoke-SqlNonQuery $this.SqlConnectionString "DELETE FROM dbo.$($definition.table) WHERE id=@id" @{ "@id" = $Id }
+            return Get-SqlGradeDataset $this.SqlConnectionString $Name
+        }
+        if (Get-SqlThicknessDatasetDefinition $Name) {
+            $definition = Get-SqlThicknessDatasetDefinition $Name
+            Invoke-SqlNonQuery $this.SqlConnectionString "DELETE FROM dbo.$($definition.table) WHERE id=@id" @{ "@id" = $Id }
+            return Get-SqlThicknessDataset $this.SqlConnectionString $Name
+        }
+        if (Get-SqlAdditionalBasicDatasetDefinition $Name) {
+            $definition = Get-SqlAdditionalBasicDatasetDefinition $Name
+            Invoke-SqlNonQuery $this.SqlConnectionString "DELETE FROM dbo.$($definition.table) WHERE id=@id" @{ "@id" = $Id }
+            return Get-SqlAdditionalBasicDataset $this.SqlConnectionString $Name
+        }
+        if ($Name -ne "heatTreatmentRequirements") {
+            Mock-DeleteRow -Repository $this -Name $Name -Id $Id
+            Save-MockPersistentState -State $this.State
+            return $this.GetDataset($Name)
+        }
+        Invoke-SqlNonQuery $this.SqlConnectionString "DELETE FROM dbo.yclyq WHERE id=@id" @{ "@id" = $Id }
+        return Get-SqlHeatTreatmentDataset $this.SqlConnectionString
     }
 
     $repository | Add-Member -MemberType ScriptMethod -Name Login -Force -Value {

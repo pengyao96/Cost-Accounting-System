@@ -1,15 +1,29 @@
 ﻿function Get-SeedData {
     $datasetConfig = [ordered]@{
+        heatTreatmentRequirements = @{ title = "热处理要求"; description = "热处理代码与要求说明"; tableName = "yclyq"; readonly = $false; collectable = $false }
+        slabGrades = @{ title = "板坯钢种"; description = "板坯钢种、系列与品种"; tableName = "lggrade"; readonly = $false; collectable = $false }
+        plateGrades = @{ title = "钢板钢种"; description = "钢板钢种、品种与系列"; tableName = "ljgrade"; readonly = $false; collectable = $false }
+        coilGrades = @{ title = "钢卷钢种"; description = "钢卷钢种、品种与系列"; tableName = "rzgrade"; readonly = $false; collectable = $false }
+        slabThicknessIndexes = @{ title = "板坯厚度索引"; description = "板坯厚度索引，当前按设计保持空表"; tableName = "lgthick"; readonly = $false; collectable = $false }
+        plateThicknessIndexes = @{ title = "钢板厚度索引"; description = "钢板厚度索引"; tableName = "ljthick"; readonly = $false; collectable = $false }
+        coilThicknessIndexes = @{ title = "钢卷厚度索引"; description = "钢卷厚度索引"; tableName = "thick"; readonly = $false; collectable = $false }
+        slabWidthIndexes = @{ title = "板坯宽度索引"; description = "板坯宽度索引，当前按设计保持空表"; tableName = "lgwidth"; readonly = $false; collectable = $false }
+        plateWidthIndexes = @{ title = "钢板宽度索引"; description = "钢板宽度索引"; tableName = "ljwidth"; readonly = $false; collectable = $false }
+        coilWidthIndexes = @{ title = "钢卷宽度索引"; description = "钢卷宽度索引"; tableName = "width"; readonly = $false; collectable = $false }
+        slabLengthIndexes = @{ title = "板坯长度索引"; description = "板坯长度索引"; tableName = "lgslablen"; readonly = $false; collectable = $false }
+        plateLengthIndexes = @{ title = "钢板长度索引"; description = "钢板长度索引"; tableName = "ljpatlen"; readonly = $false; collectable = $false }
+        steelmakingPaths = @{ title = "工艺路径"; description = "炼钢工艺路径"; tableName = "lgpath"; readonly = $false; collectable = $false }
+        wageEquipmentCoefficients = @{ title = "工资设备系数"; description = "区域工资与设备系数"; tableName = "lggongzishebeixishu"; readonly = $false; collectable = $false }
+        steelmakingConsumptionTypes = @{ title = "炼钢消耗类型"; description = "炼钢及连铸消耗类型"; tableName = "lgxhlx"; readonly = $false; collectable = $false }
+        rollingConsumptionTypes = @{ title = "轧钢消耗类型"; description = "轧钢消耗类型"; tableName = "xhlx"; readonly = $false; collectable = $false }
+        rollingConsumableProducts = @{ title = "1780 耗材产品"; description = "1780 生产线耗材产品及分摊配置"; tableName = "hccp"; readonly = $false; collectable = $false }
+        steelmakingConsumableProducts = @{ title = "炼钢耗材产品"; description = "炼钢耗材产品分类"; tableName = "lghccp"; readonly = $false; collectable = $false }
+        coilConsumableProducts = @{ title = "炉卷耗材产品"; description = "炉卷生产线耗材产品及分摊配置"; tableName = "ljhccp"; readonly = $false; collectable = $false }
         steelmakingGrades = @{ title = "炼钢钢种基础数据"; description = "炼钢钢种与系列；为1780和炉卷提供炼钢水平附加的关联基础"; readonly = $false; collectable = $false }
         steelmakingRoutes = @{ title = "炼钢路径表"; description = "钢种对应的精炼路径与连铸号"; readonly = $false; collectable = $false }
-        steelmakingProducts = @{ title = "炼钢消耗产品"; description = "钢铁料、合金料、熔炼费与固定费用的分摊规则及区域"; readonly = $false; collectable = $false }
         steelmakingPrices = @{ title = "炼钢计划价与水平附加"; description = "铁水、合金料计划价及炼钢降本增效形成的板坯水平附加"; readonly = $false; collectable = $false }
         steelmakingActuals = @{ title = "炼钢工序实绩"; description = "转炉、精炼、连铸、天车物流、脱硫等三级实绩；每8小时采集"; readonly = $false; collectable = $true }
         steelmakingFixedConsumption = @{ title = "炼钢固定消耗实绩"; description = "未接能源计量系统时按周录入，接入后每日更新"; readonly = $false; collectable = $false }
-        steelGrades = @{ title = "Steel Grades"; description = "Grade, product and series mapping from JS module"; readonly = $false; collectable = $false }
-        thicknessRules = @{ title = "Thickness Rules"; description = "Thickness index and range rules"; readonly = $false; collectable = $false }
-        widthRules = @{ title = "Width Rules"; description = "Width index and range rules"; readonly = $false; collectable = $false }
-        consumeProducts = @{ title = "Consume Products"; description = "Consumable catalog and share settings"; readonly = $false; collectable = $false }
         shareRules = @{ title = "Share Rules"; description = "Heating, rolling and roll-cost share rules"; readonly = $false; collectable = $false }
         planPriceLj = @{ title = "LJ Plan Price"; description = "Plan price dataset for LJ line"; readonly = $false; collectable = $false }
         planPriceRz = @{ title = "RZ Plan Price"; description = "Plan price dataset for RZ line"; readonly = $false; collectable = $false }
@@ -53,6 +67,60 @@
         authTokens = @{}
         datasetConfig = $datasetConfig
         datasets = [ordered]@{
+            heatTreatmentRequirements = @(
+                @{ id = 1; rclyq = "N"; rclms = "要求热处理" }
+                @{ id = 2; rclyq = "X"; rclms = "不要求热处理" }
+            )
+            slabGrades = @(
+                @{ id = 1; 钢种 = "Q235B"; 品种 = ""; 系列 = "普碳" }
+            )
+            plateGrades = @(
+                @{ id = 1; 钢种 = "Q390B"; 品种 = "Q390板"; 系列 = "低合金板" }
+            )
+            coilGrades = @(
+                @{ id = 1; 钢种 = "SPHC"; 品种 = "SPHC、SPHT卷"; 系列 = "冷轧基料" }
+            )
+            slabThicknessIndexes = @()
+            plateThicknessIndexes = @(
+                @{ id = 1; 厚度索引 = "1"; 厚度起 = 4.74; 厚度尾 = 6.01; 厚度范围 = "(4.74,6.01]" }
+            )
+            coilThicknessIndexes = @(
+                @{ id = 1; 厚度索引 = "1"; 厚度起 = 1.2; 厚度尾 = 1.6; 厚度范围 = "(1.2,1.6]" }
+            )
+            slabWidthIndexes = @()
+            plateWidthIndexes = @(
+                @{ id = 1; 宽度索引 = "1"; 起始 = 800; 结束 = 2000 }
+            )
+            coilWidthIndexes = @(
+                @{ id = 1; 宽度索引 = "1"; 起始 = 800; 结束 = 1000 }
+            )
+            slabLengthIndexes = @(
+                @{ id = 1; 序号 = 1; 长度起始 = 4800; 长度终止 = 5100 }
+            )
+            plateLengthIndexes = @(
+                @{ id = 1; 序号 = 1; 长度起始 = 4700; 长度终止 = 9999 }
+            )
+            steelmakingPaths = @(
+                @{ id = 1; path_idx = 1; zlpath = "A"; jlpath = "J"; lzpath = "1" }
+            )
+            wageEquipmentCoefficients = @(
+                @{ id = 1; 区域 = "转炉与LF"; 工资系数 = 12.4; 设备系数 = 9.8 }
+            )
+            steelmakingConsumptionTypes = @(
+                @{ id = 1; hno = 1; bno = 3; cp = "中高碳锰铁"; dj = "100"; 分摊类型 = "辊耗分摊"; 区域 = "炼钢"; 列名 = "" }
+            )
+            rollingConsumptionTypes = @(
+                @{ id = 1; 序号 = 1; 消耗类型 = "钢坯" }
+            )
+            rollingConsumableProducts = @(
+                @{ id = 1; hno = 1; bno = 3; cp = "轧辊"; 日核算类型 = "上月"; 分摊类型 = "辊耗分摊"; 列名 = "" }
+            )
+            steelmakingConsumableProducts = @(
+                @{ id = 1; bno = 1; 消耗 = "钢铁料" }
+            )
+            coilConsumableProducts = @(
+                @{ id = 1; hno = 1; bno = 3; cp = "轧辊"; 日核算类型 = "上月"; 分摊类型 = "辊耗分摊"; 列名 = "" }
+            )
             steelmakingGrades = @(
                 @{ id = 1; gradeName = "Q235B"; xilie = "低碳系列"; note = "炼钢小标" }
                 @{ id = 2; gradeName = "Q345B"; xilie = "结构钢系列"; note = "炼钢小标" }
@@ -62,13 +130,6 @@
                 @{ id = 1; routeIndex = "LF-1"; grade = "Q235B"; refiningRoute = "转炉-LF"; casterNo = "1#连铸" }
                 @{ id = 2; routeIndex = "RH-1"; grade = "Q345B"; refiningRoute = "转炉-LF-RH"; casterNo = "2#连铸" }
                 @{ id = 3; routeIndex = "VD-1"; grade = "SPHC"; refiningRoute = "转炉-VD"; casterNo = "1#连铸" }
-            )
-            steelmakingProducts = @(
-                @{ id = 1; consumeType = "钢铁料"; product = "铁水"; price = 2150; shareType = "三级实际消耗"; area = "炼钢" }
-                @{ id = 2; consumeType = "合金料"; product = "锰硅合金"; price = 6500; shareType = "三级实际消耗"; area = "炼钢" }
-                @{ id = 3; consumeType = "熔炼费"; product = "冶金石灰"; price = 400; shareType = "三级实际消耗"; area = "炼钢" }
-                @{ id = 4; consumeType = "制造费用"; product = "电力"; price = 0.71; shareType = "浇铸时间分摊"; area = "连铸" }
-                @{ id = 5; consumeType = "固定费用"; product = "折旧"; price = 0; shareType = "区域设备费系数×区域时间"; area = "炼钢/连铸" }
             )
             steelmakingPrices = @(
                 @{ id = 1; grade = "Q235B"; pigIronPlanPrice = 2150; alloyPrice = 6500; levelPremium = 58; effectiveDate = "2026-07-01"; note = "炼钢水平附加，供炉卷成本使用" }
@@ -82,30 +143,6 @@
             steelmakingFixedConsumption = @(
                 @{ id = 1; period = "2026-07"; area = "炼钢"; product = "工资及薪酬"; amount = 0; money = 126000; inputCycle = "每周" }
                 @{ id = 2; period = "2026-07"; area = "连铸"; product = "折旧"; amount = 0; money = 86000; inputCycle = "每周" }
-            )
-            steelGrades = @(
-                @{ id = 1; gradeName = "Q235B"; pinzhong = "carbon_steel"; xilie = "low_carbon"; quyu = "lj"; note = "grade map for LJ" }
-                @{ id = 2; gradeName = "SPHC"; pinzhong = "hot_roll_commercial"; xilie = "commercial_series"; quyu = "rz"; note = "grade map for RZ" }
-                @{ id = 3; gradeName = "ST12"; pinzhong = "cold_roll_feed"; xilie = "deep_draw_series"; quyu = "rz"; note = "used in standard cost sample" }
-                @{ id = 4; gradeName = "Q345B"; pinzhong = "alloy_steel"; xilie = "structural_series"; quyu = "lj"; note = "used in line and series sample" }
-            )
-            thicknessRules = @(
-                @{ id = 1; line = "lj"; thickIndex = 1; start = 1.2; end = 2.0; label = "[1.2,2.0)"; note = "lj thickness rule" }
-                @{ id = 2; line = "lj"; thickIndex = 2; start = 2.0; end = 4.0; label = "[2.0,4.0)"; note = "lj thickness rule" }
-                @{ id = 3; line = "rz"; thickIndex = 1; start = 1.5; end = 3.0; label = "[1.5,3.0)"; note = "rz thickness rule" }
-                @{ id = 4; line = "rz"; thickIndex = 2; start = 3.0; end = 6.0; label = "[3.0,6.0)"; note = "rz thickness rule" }
-            )
-            widthRules = @(
-                @{ id = 1; line = "lj"; widthIndex = 1; start = 900; end = 1100; label = "[900,1100)"; note = "lj width rule" }
-                @{ id = 2; line = "lj"; widthIndex = 2; start = 1100; end = 1300; label = "[1100,1300)"; note = "lj width rule" }
-                @{ id = 3; line = "rz"; widthIndex = 1; start = 1100; end = 1400; label = "[1100,1400)"; note = "rz width rule" }
-                @{ id = 4; line = "rz"; widthIndex = 2; start = 1400; end = 1650; label = "[1400,1650)"; note = "rz width rule" }
-            )
-            consumeProducts = @(
-                @{ id = 1; line = "lj"; hno = 101; quyu = "heating"; product = "mixed_gas"; shareType = "heating_share"; columnName = "hunhemeiqi"; note = "consume row for LJ" }
-                @{ id = 2; line = "lj"; hno = 102; quyu = "rolling"; product = "work_roll"; shareType = "roll_share"; columnName = "gunhao"; note = "consume row for LJ" }
-                @{ id = 3; line = "rz"; hno = 201; quyu = "heating"; product = "soft_water"; shareType = "heating_share"; columnName = "ruanshui"; note = "consume row for RZ" }
-                @{ id = 4; line = "rz"; hno = 202; quyu = "packing"; product = "packing_strip"; shareType = "avg_share"; columnName = "baozhuang"; note = "consume row for RZ" }
             )
             shareRules = @(
                 @{ id = 1; line = "lj"; ruleType = "yield_rate"; basis = "coil_wt / slab_wt"; targetTable = "rzbiaozhunchengbenzongbiao"; note = "from StackMillPercent" }
