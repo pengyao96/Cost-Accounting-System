@@ -625,19 +625,13 @@
     html.push('<label class="table-search"><span>查询</span><input type="search" placeholder="输入关键字" value="' + safeInputValue(query) + '" data-query-dataset="' + safe(page.dataset) + '"></label>');
     html.push('<button class="secondary-btn" data-action="import-excel" data-dataset="' + safe(page.dataset) + '">导入 Excel</button><input class="file-input" type="file" accept=".csv,.tsv,.txt,.xls" data-file-dataset="' + safe(page.dataset) + '">');
     html.push('<button class="secondary-btn" data-action="export-excel" data-dataset="' + safe(page.dataset) + '">导出 Excel</button>');
-    html.push('<span class="mock-chip">显示 ' + safe(String(visibleRows.length)) + ' / ' + safe(String(rows.length)) + ' 条</span></div>');
+    html.push('<span class="mock-chip" data-dataset-count="' + safe(page.dataset) + '">显示 ' + safe(String(visibleRows.length)) + ' / ' + safe(String(rows.length)) + ' 条</span></div>');
     html.push('<div class="table-wrap"><table><thead><tr>');
     each(columns, function (column) {
       html.push("<th>" + safe(column) + "</th>");
     });
-    html.push("</tr></thead><tbody>");
-    each(visibleRows, function (row) {
-      html.push('<tr class="' + (String(row.id) === String(selectedId) ? "selected" : "") + '" data-select-row="' + safe(page.dataset + ":" + row.id) + '">');
-      each(columns, function (column) {
-        html.push("<td>" + safe(formatCell(row[column])) + "</td>");
-      });
-      html.push("</tr>");
-    });
+    html.push('</tr></thead><tbody data-dataset-rows="' + safe(page.dataset) + '">');
+    html.push(renderDatasetTableRows(page.dataset, visibleRows, columns, selectedId));
     html.push("</tbody></table></div></section>");
 
     html.push('<section class="panel"><div class="panel-header"><h3>' + (meta.readonly ? "记录详情" : "记录编辑") + "</h3><p>" + safe(meta.readonly ? "当前数据集只读，未来应由真实采集服务或数据库同步更新。" : "当前会通过 API 保存到 mock 仓储，未来可替换为 SQL 仓储。") + "</p></div>");
@@ -868,16 +862,7 @@
       });
     });
 
-    bindClick("[data-select-row]", function (rowButton) {
-      var parts = rowButton.getAttribute("data-select-row").split(":");
-      var datasetName = parts[0];
-      var rowId = parts[1];
-      var payload = state.datasets[datasetName];
-      var row = findRowById(payload && payload.rows ? payload.rows : [], rowId);
-      state.selectedRows[datasetName] = rowId;
-      state.drafts[datasetName] = cloneRow(row);
-      render();
-    });
+    bindDatasetRowSelection();
 
     bindInputs("[data-input-dataset]", function (input) {
       var dataset = input.getAttribute("data-input-dataset");
@@ -889,8 +874,9 @@
     });
 
     bindInputs("[data-query-dataset]", function (input) {
-      state.datasetQueries[input.getAttribute("data-query-dataset")] = input.value;
-      render();
+      var dataset = input.getAttribute("data-query-dataset");
+      state.datasetQueries[dataset] = input.value;
+      updateDatasetFilter(dataset);
     });
 
     bindClick("[data-action='import-excel']", function (button) {
@@ -917,7 +903,7 @@
       var datasetMeta = datasetState.meta || {};
       var columns = datasetMeta.columns || [];
       state.selectedRows[dataset] = null;
-      state.drafts[dataset] = makeEmptyRow(columns);
+      state.drafts[dataset] = makeEmptyRow(columns, datasetState.rows || []);
       render();
     });
 
@@ -927,7 +913,11 @@
         saveLocalRow(dataset);
         return;
       }
-      apiPost("/datasets/" + dataset, state.drafts[dataset] || {}, function (error, saved) {
+      var payload = cloneRow(state.drafts[dataset] || {});
+      if (state.selectedRows[dataset] === null) {
+        payload.id = 0;
+      }
+      apiPost("/datasets/" + dataset, payload, function (error, saved) {
         if (error) {
           showError(error);
           return;
@@ -1099,6 +1089,19 @@
     });
   }
 
+  function bindDatasetRowSelection() {
+    bindClick("[data-select-row]", function (rowButton) {
+      var parts = rowButton.getAttribute("data-select-row").split(":");
+      var datasetName = parts[0];
+      var rowId = parts[1];
+      var payload = state.datasets[datasetName];
+      var row = findRowById(payload && payload.rows ? payload.rows : [], rowId);
+      state.selectedRows[datasetName] = rowId;
+      state.drafts[datasetName] = cloneRow(row);
+      render();
+    });
+  }
+
   function loadUserManagement(callback) {
     apiPost('/auth/users', { token: state.session.token }, function (error, payload) {
       if (error) { done(callback, error); showError(error); return; }
@@ -1236,6 +1239,35 @@
         return String(row[key] === null || row[key] === undefined ? "" : row[key]).toLowerCase().indexOf(keyword) >= 0;
       });
     });
+  }
+
+  function renderDatasetTableRows(dataset, rows, columns, selectedId) {
+    var html = [];
+    each(rows, function (row) {
+      html.push('<tr class="' + (String(row.id) === String(selectedId) ? "selected" : "") + '" data-select-row="' + safe(dataset + ":" + row.id) + '">');
+      each(columns, function (column) {
+        html.push("<td>" + safe(formatCell(row[column])) + "</td>");
+      });
+      html.push("</tr>");
+    });
+    return html.join("");
+  }
+
+  function updateDatasetFilter(dataset) {
+    var payload = state.datasets[dataset];
+    var meta = payload && payload.meta ? payload.meta : {};
+    var rows = payload && payload.rows ? payload.rows : [];
+    var columns = meta.columns || inferColumns(rows);
+    var visibleRows = filterRows(rows, state.datasetQueries[dataset] || "");
+    var body = app.querySelector('[data-dataset-rows="' + dataset + '"]');
+    var count = app.querySelector('[data-dataset-count="' + dataset + '"]');
+    if (body) {
+      body.innerHTML = renderDatasetTableRows(dataset, visibleRows, columns, state.selectedRows[dataset]);
+      bindDatasetRowSelection();
+    }
+    if (count) {
+      count.textContent = "显示 " + visibleRows.length + " / " + rows.length + " 条";
+    }
   }
 
   function isLocalDataset(dataset) {
@@ -1386,10 +1418,13 @@
     return row ? JSON.parse(JSON.stringify(row)) : {};
   }
 
-  function makeEmptyRow(columns) {
+  function makeEmptyRow(columns, rows) {
     var row = {};
+    var nextId = (rows || []).reduce(function (max, item) {
+      return Math.max(max, Number(item.id) || 0);
+    }, 0) + 1;
     each(columns, function (column) {
-      row[column] = column === "id" ? 0 : "";
+      row[column] = column === "id" ? nextId : "";
     });
     return row;
   }
@@ -1505,7 +1540,7 @@
       node.onchange = function () {
         handler(node);
       };
-      node.onkeyup = function () {
+      node.oninput = function () {
         handler(node);
       };
     });

@@ -828,9 +828,14 @@ body {
 .table-search input { min-height: 32px; border-radius: 4px; }
 .mock-chip { padding: 6px 8px; border-radius: 3px; background: #eaf6ef; color: #287558; font-size: 11px; }
 .table-wrap { border-radius: 4px; border-color: #dbe4e9; }
+.table-panel .table-wrap {
+  max-height: clamp(260px, 52vh, 520px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
 table { min-width: 680px; font-size: 12px; }
 th, td { padding: 10px 12px; border-bottom-color: #e7edf0; }
-thead th { background: #f3f7f9; color: #506672; font-weight: 700; }
+thead th { background: #f3f7f9; color: #506672; font-weight: 700; z-index: 2; box-shadow: 0 1px 0 #dbe4e9; }
 tbody tr:hover, tbody tr.selected { background: #eaf5f8; }
 .editor-form { gap: 11px; }
 .editor-form label, .cost-runner label { gap: 5px; }
