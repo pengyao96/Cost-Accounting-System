@@ -180,6 +180,19 @@ function Get-SqlAdditionalBasicDatasetDefinition {
         "rollingConsumableProducts" { return @{ table = "hccp"; title = "1780 耗材产品"; description = "1780 生产线耗材产品及分摊配置"; columns = @("hno", "bno", "cp", "日核算类型", "分摊类型", "列名") } }
         "steelmakingConsumableProducts" { return @{ table = "lghccp"; title = "炼钢耗材产品"; description = "炼钢耗材产品分类"; columns = @("bno", "消耗") } }
         "coilConsumableProducts" { return @{ table = "ljhccp"; title = "炉卷耗材产品"; description = "炉卷生产线耗材产品及分摊配置"; columns = @("hno", "bno", "cp", "日核算类型", "分摊类型", "列名") } }
+        "electricityConfigurations" { return @{ table = "ljdianneng"; title = "电能配置表"; description = "电表按区域的分配配置"; columns = @("电表", "区域", "分配") } }
+        "energyConfigurations" { return @{ table = "ljnengyuan"; title = "能源配置表"; description = "能源介质按区域的分配配置"; columns = @("mpname", "rankname", "区域", "分配") } }
+        "rzSampleFees" { return @{ table = "sample"; title = "1780 试样加工费"; description = "1780 钢种试样加工费"; columns = @("钢种", "厚度索引", "宽度索引", "价格") } }
+        "ljSampleFees" { return @{ table = "ljsample"; title = "炉卷试样加工费"; description = "炉卷钢种试样加工费"; columns = @("钢种", "厚度索引", "宽度索引", "价格") } }
+        "alloyPlanPrices" { return @{ table = "lghjljiaoge"; title = "合金计划价"; description = "合金及原料计划价格"; columns = @("mat_code", "mat_name", "计划价", "价差", "价格", "列明", "hjtype") } }
+        "rzSlabPlanPrices" { return @{ table = "jihuajia"; title = "1780 板坯计划价"; description = "1780 钢种板坯计划价"; columns = @("钢种", "价格", "市场价", "炼钢水平附加", "炼钢板坯价格") } }
+        "ljSlabPlanPrices" { return @{ table = "ljjihuajia"; title = "炉卷板坯计划价"; description = "炉卷钢种板坯计划价"; columns = @("钢种", "计划价", "市场价", "炼钢水平附加", "炼钢实际价格") } }
+        "rzSlabPlanPriceHistory" { return @{ table = "jihuajiahistory"; title = "1780 板坯历史计划价"; description = "1780 板坯历史计划价"; columns = @("钢种", "价格", "时间") } }
+        "ljSlabPlanPriceHistory" { return @{ table = "ljjihuajiahistory"; title = "炉卷板坯历史计划价"; description = "炉卷板坯历史计划价，当前为空表"; columns = @("钢种", "价格", "时间") } }
+        "plateSalePriceHistory" { return @{ table = "ljpatpricehistory"; title = "钢板历史销售价"; description = "钢板历史销售价，当前为空表"; columns = @("钢种", "厚度索引", "宽度索引", "价格", "时间") } }
+        "coilSalePriceHistory" { return @{ table = "coilpricehistory"; title = "钢卷历史销售价"; description = "钢卷历史销售价"; columns = @("钢种", "厚度索引", "宽度索引", "价格", "时间") } }
+        "internalSettlementPrices" { return @{ table = "ljhuishoufeiyong"; title = "内部结算价"; description = "内部结算单价配置"; columns = @("hno", "类型", "单价", "单价2", "单价3", "单价4") } }
+        "packingFees" { return @{ table = "baozhuangfei"; title = "包装费"; description = "钢种包装费配置"; columns = @("钢种", "高度索引", "宽度索引", "价格") } }
         default { return $null }
     }
 }

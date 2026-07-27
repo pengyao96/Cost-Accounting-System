@@ -19,6 +19,19 @@
         rollingConsumableProducts = @{ title = "1780 耗材产品"; description = "1780 生产线耗材产品及分摊配置"; tableName = "hccp"; readonly = $false; collectable = $false }
         steelmakingConsumableProducts = @{ title = "炼钢耗材产品"; description = "炼钢耗材产品分类"; tableName = "lghccp"; readonly = $false; collectable = $false }
         coilConsumableProducts = @{ title = "炉卷耗材产品"; description = "炉卷生产线耗材产品及分摊配置"; tableName = "ljhccp"; readonly = $false; collectable = $false }
+        electricityConfigurations = @{ title = "电能配置表"; description = "电表按区域的分配配置"; tableName = "ljdianneng"; readonly = $false; collectable = $false }
+        energyConfigurations = @{ title = "能源配置表"; description = "能源介质按区域的分配配置"; tableName = "ljnengyuan"; readonly = $false; collectable = $false }
+        rzSampleFees = @{ title = "1780 试样加工费"; description = "1780 钢种试样加工费"; tableName = "sample"; readonly = $false; collectable = $false }
+        ljSampleFees = @{ title = "炉卷试样加工费"; description = "炉卷钢种试样加工费"; tableName = "ljsample"; readonly = $false; collectable = $false }
+        alloyPlanPrices = @{ title = "合金计划价"; description = "合金及原料计划价格"; tableName = "lghjljiaoge"; readonly = $false; collectable = $false }
+        rzSlabPlanPrices = @{ title = "1780 板坯计划价"; description = "1780 钢种板坯计划价"; tableName = "jihuajia"; readonly = $false; collectable = $false }
+        ljSlabPlanPrices = @{ title = "炉卷板坯计划价"; description = "炉卷钢种板坯计划价"; tableName = "ljjihuajia"; readonly = $false; collectable = $false }
+        rzSlabPlanPriceHistory = @{ title = "1780 板坯历史计划价"; description = "1780 板坯历史计划价"; tableName = "jihuajiahistory"; readonly = $false; collectable = $false }
+        ljSlabPlanPriceHistory = @{ title = "炉卷板坯历史计划价"; description = "炉卷板坯历史计划价，当前为空表"; tableName = "ljjihuajiahistory"; readonly = $false; collectable = $false }
+        plateSalePriceHistory = @{ title = "钢板历史销售价"; description = "钢板历史销售价，当前为空表"; tableName = "ljpatpricehistory"; readonly = $false; collectable = $false }
+        coilSalePriceHistory = @{ title = "钢卷历史销售价"; description = "钢卷历史销售价"; tableName = "coilpricehistory"; readonly = $false; collectable = $false }
+        internalSettlementPrices = @{ title = "内部结算价"; description = "内部结算单价配置"; tableName = "ljhuishoufeiyong"; readonly = $false; collectable = $false }
+        packingFees = @{ title = "包装费"; description = "钢种包装费配置"; tableName = "baozhuangfei"; readonly = $false; collectable = $false }
         steelmakingGrades = @{ title = "炼钢钢种基础数据"; description = "炼钢钢种与系列；为1780和炉卷提供炼钢水平附加的关联基础"; readonly = $false; collectable = $false }
         steelmakingRoutes = @{ title = "炼钢路径表"; description = "钢种对应的精炼路径与连铸号"; readonly = $false; collectable = $false }
         steelmakingPrices = @{ title = "炼钢计划价与水平附加"; description = "铁水、合金料计划价及炼钢降本增效形成的板坯水平附加"; readonly = $false; collectable = $false }
@@ -121,6 +134,19 @@
             coilConsumableProducts = @(
                 @{ id = 1; hno = 1; bno = 3; cp = "轧辊"; 日核算类型 = "上月"; 分摊类型 = "辊耗分摊"; 列名 = "" }
             )
+            electricityConfigurations = @(@{ id = 1; 电表 = "力6131"; 区域 = "炼钢"; 分配 = 0 })
+            energyConfigurations = @(@{ id = 1; mpname = "7#8#9#锅炉供二炼轧蒸汽"; rankname = "蒸汽"; 区域 = "炼钢"; 分配 = 1 })
+            rzSampleFees = @(@{ id = 1; 钢种 = "Q345qC改Q345C"; 厚度索引 = ""; 宽度索引 = ""; 价格 = 0 })
+            ljSampleFees = @(@{ id = 1; 钢种 = "Q370R1"; 厚度索引 = ""; 宽度索引 = ""; 价格 = 0 })
+            alloyPlanPrices = @(@{ id = 1; mat_code = "1830000999"; mat_name = "白云石"; 计划价 = 140; 价差 = ""; 价格 = 140; 列明 = "baiyunshi"; hjtype = "散装料" })
+            rzSlabPlanPrices = @(@{ id = 1; 钢种 = "08AL"; 价格 = 2000; 市场价 = 0; 炼钢水平附加 = 0; 炼钢板坯价格 = 0 })
+            ljSlabPlanPrices = @(@{ id = 1; 钢种 = "09MnNiDr"; 计划价 = 3700; 市场价 = 0; 炼钢水平附加 = 0; 炼钢实际价格 = 3700 })
+            rzSlabPlanPriceHistory = @()
+            ljSlabPlanPriceHistory = @()
+            plateSalePriceHistory = @()
+            coilSalePriceHistory = @()
+            internalSettlementPrices = @(@{ id = 1; hno = "2931900000"; 类型 = "中板头"; 单价 = 2930; 单价2 = 0; 单价3 = 0; 单价4 = 0 })
+            packingFees = @(@{ id = 1; 钢种 = "08Al"; 高度索引 = ""; 宽度索引 = ""; 价格 = 0 })
             steelmakingGrades = @(
                 @{ id = 1; gradeName = "Q235B"; xilie = "低碳系列"; note = "炼钢小标" }
                 @{ id = 2; gradeName = "Q345B"; xilie = "结构钢系列"; note = "炼钢小标" }

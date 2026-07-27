@@ -95,15 +95,15 @@
       id: "basic-fee",
       label: "基础费用",
       children: [
-        { id: "electric-config", label: "电能配置表" },
-        { id: "energy-config", label: "能源配置表" },
-        { id: "sample-fee", label: "试样加工费", children: [{ id: "rz-sample-fee", label: "1780 试样加工费", pageId: "samplePriceRz" }, { id: "lj-sample-fee", label: "炉卷试样加工费", pageId: "samplePriceLj" }] },
-        { id: "plan-price", label: "计划价", children: [{ id: "alloy-plan-price", label: "合金计划价", pageId: "steelmakingPrices" }, { id: "slab-plan-price", label: "板坯计划价", children: [{ id: "rz-slab-plan-price", label: "1780 板坯计划价", pageId: "planPriceRz" }, { id: "lj-slab-plan-price", label: "炉卷板坯计划价", pageId: "planPriceLj" }] }, { id: "hot-metal-plan-price", label: "铁水计划价", pageId: "steelmakingPrices" }] },
+        { id: "electric-config", label: "电能配置表", pageId: "electric-config" },
+        { id: "energy-config", label: "能源配置表", pageId: "energy-config" },
+        { id: "sample-fee", label: "试样加工费", children: [{ id: "rz-sample-fee", label: "1780 试样加工费", pageId: "rz-sample-fee" }, { id: "lj-sample-fee", label: "炉卷试样加工费", pageId: "lj-sample-fee" }] },
+        { id: "plan-price", label: "计划价", children: [{ id: "alloy-plan-price", label: "合金计划价", pageId: "alloy-plan-price" }, { id: "slab-plan-price", label: "板坯计划价", children: [{ id: "rz-slab-plan-price", label: "1780 板坯计划价", pageId: "rz-slab-plan-price" }, { id: "lj-slab-plan-price", label: "炉卷板坯计划价", pageId: "lj-slab-plan-price" }] }, { id: "hot-metal-plan-price", label: "铁水计划价" }] },
         { id: "actual-price", label: "实际价", children: [{ id: "alloy-actual-price", label: "合金实际价", pageId: "steelmakingPrices" }, { id: "slab-actual-price", label: "板坯实际价", children: [{ id: "rz-slab-actual-price", label: "1780 板坯实际价", pageId: "planPriceRz" }, { id: "lj-slab-actual-price", label: "炉卷板坯实际价", pageId: "planPriceLj" }] }, { id: "hot-metal-actual-price", label: "铁水实际价", pageId: "steelmakingPrices" }] },
-        { id: "history-plan-price", label: "历史计划价", children: [{ id: "rz-history-plan-price", label: "1780 板坯历史计划价", pageId: "planPriceRz" }, { id: "lj-history-plan-price", label: "炉卷板坯历史计划价", pageId: "planPriceLj" }] },
-        { id: "history-sale-price", label: "历史销售价", children: [{ id: "plate-history-sale-price", label: "钢板历史销售价" }, { id: "coil-history-sale-price", label: "钢卷历史销售价" }] },
-        { id: "internal-price", label: "内部结算价" },
-        { id: "packing-fee", label: "包装费", pageId: "samplePriceRz" }
+        { id: "history-plan-price", label: "历史计划价", children: [{ id: "rz-history-plan-price", label: "1780 板坯历史计划价", pageId: "rz-history-plan-price" }, { id: "lj-history-plan-price", label: "炉卷板坯历史计划价", pageId: "lj-history-plan-price" }] },
+        { id: "history-sale-price", label: "历史销售价", children: [{ id: "plate-history-sale-price", label: "钢板历史销售价", pageId: "plate-history-sale-price" }, { id: "coil-history-sale-price", label: "钢卷历史销售价", pageId: "coil-history-sale-price" }] },
+        { id: "internal-price", label: "内部结算价", pageId: "internal-price" },
+        { id: "packing-fee", label: "包装费", pageId: "packing-fee" }
       ]
     },
     {
@@ -175,6 +175,19 @@
   pageMap["rz-consumable"] = { id: "rz-consumable", title: "1780 耗材产品", kind: "dataset", dataset: "rollingConsumableProducts" };
   pageMap["steelmaking-consumable"] = { id: "steelmaking-consumable", title: "炼钢耗材产品", kind: "dataset", dataset: "steelmakingConsumableProducts" };
   pageMap["lj-consumable"] = { id: "lj-consumable", title: "炉卷耗材产品", kind: "dataset", dataset: "coilConsumableProducts" };
+  pageMap["electric-config"] = { id: "electric-config", title: "电能配置表", kind: "dataset", dataset: "electricityConfigurations" };
+  pageMap["energy-config"] = { id: "energy-config", title: "能源配置表", kind: "dataset", dataset: "energyConfigurations" };
+  pageMap["rz-sample-fee"] = { id: "rz-sample-fee", title: "1780 试样加工费", kind: "dataset", dataset: "rzSampleFees" };
+  pageMap["lj-sample-fee"] = { id: "lj-sample-fee", title: "炉卷试样加工费", kind: "dataset", dataset: "ljSampleFees" };
+  pageMap["alloy-plan-price"] = { id: "alloy-plan-price", title: "合金计划价", kind: "dataset", dataset: "alloyPlanPrices" };
+  pageMap["rz-slab-plan-price"] = { id: "rz-slab-plan-price", title: "1780 板坯计划价", kind: "dataset", dataset: "rzSlabPlanPrices" };
+  pageMap["lj-slab-plan-price"] = { id: "lj-slab-plan-price", title: "炉卷板坯计划价", kind: "dataset", dataset: "ljSlabPlanPrices" };
+  pageMap["rz-history-plan-price"] = { id: "rz-history-plan-price", title: "1780 板坯历史计划价", kind: "dataset", dataset: "rzSlabPlanPriceHistory" };
+  pageMap["lj-history-plan-price"] = { id: "lj-history-plan-price", title: "炉卷板坯历史计划价", kind: "dataset", dataset: "ljSlabPlanPriceHistory" };
+  pageMap["plate-history-sale-price"] = { id: "plate-history-sale-price", title: "钢板历史销售价", kind: "dataset", dataset: "plateSalePriceHistory" };
+  pageMap["coil-history-sale-price"] = { id: "coil-history-sale-price", title: "钢卷历史销售价", kind: "dataset", dataset: "coilSalePriceHistory" };
+  pageMap["internal-price"] = { id: "internal-price", title: "内部结算价", kind: "dataset", dataset: "internalSettlementPrices" };
+  pageMap["packing-fee"] = { id: "packing-fee", title: "包装费", kind: "dataset", dataset: "packingFees" };
   var LAST_PAGE_STORAGE_KEY = "second-rolling-last-page";
   var SESSION_STORAGE_KEY = "second-rolling-session";
 
@@ -209,7 +222,8 @@
       lj: { startDate: "2026-07-15T08:00", loading: false, result: null },
       rz: { startDate: "2026-07-15T08:00", loading: false, result: null }
     },
-    userManagement: { payload: null, draft: null, groups: [] }
+    userManagement: { payload: null, draft: null, groups: [] },
+    renderedPage: ""
   };
 
   if (state.session) {
@@ -338,6 +352,9 @@
   }
 
   function render() {
+    var keepTableScroll = state.session && state.renderedPage === state.currentPage;
+    var tableScrollPositions = keepTableScroll ? captureTableScrollPositions() : [];
+    var sidebarScrollTop = captureSidebarScrollPosition();
     if (!state.session) {
       app.innerHTML = renderLogin();
       bindEvents();
@@ -356,6 +373,42 @@
     ].join("");
 
     bindEvents();
+    if (keepTableScroll) {
+      restoreTableScrollPositions(tableScrollPositions);
+    }
+    restoreSidebarScrollPosition(sidebarScrollTop);
+    state.renderedPage = state.currentPage;
+  }
+
+  function captureSidebarScrollPosition() {
+    var sidebar = app.querySelector(".sidebar");
+    return sidebar ? sidebar.scrollTop : 0;
+  }
+
+  function restoreSidebarScrollPosition(scrollTop) {
+    var sidebar = app.querySelector(".sidebar");
+    if (sidebar) {
+      sidebar.scrollTop = scrollTop;
+    }
+  }
+
+  function captureTableScrollPositions() {
+    var positions = [];
+    each(app.querySelectorAll(".table-wrap"), function (tableWrap) {
+      positions.push({ top: tableWrap.scrollTop, left: tableWrap.scrollLeft });
+    });
+    return positions;
+  }
+
+  function restoreTableScrollPositions(positions) {
+    each(app.querySelectorAll(".table-wrap"), function (tableWrap, index) {
+      var position = positions[index];
+      if (!position) {
+        return;
+      }
+      tableWrap.scrollTop = position.top;
+      tableWrap.scrollLeft = position.left;
+    });
   }
 
   function getLastPage() {
