@@ -55,7 +55,24 @@ function Invoke-SqlRows {
         try {
             while ($reader.Read()) {
                 $row = [ordered]@{}
-                for ($i = 0; $i -lt $reader.FieldCount; $i += 1) { $row[$reader.GetName($i)] = if ($reader.IsDBNull($i)) { "" } else { $reader.GetValue($i) } }
+                for ($i = 0; $i -lt $reader.FieldCount; $i += 1) {
+                    if ($reader.IsDBNull($i)) {
+                        $row[$reader.GetName($i)] = ""
+                    } else {
+                        $value = $reader.GetValue($i)
+                        $columnName = $reader.GetName($i)
+                        if ($value -is [DateTime]) {
+                            $row[$columnName] = $value.ToString("yyyy-MM-dd HH:mm:ss")
+                        } elseif ($value -is [DateTimeOffset]) {
+                            $row[$columnName] = $value.ToString("yyyy-MM-dd HH:mm:ss")
+                        } elseif (($columnName -match '时间|时刻|开始|结束|time') -and ([string]$value -match '^\d{14}$')) {
+                            $rawDate = [string]$value
+                            $row[$columnName] = "{0}-{1}-{2} {3}:{4}:{5}" -f $rawDate.Substring(0,4), $rawDate.Substring(4,2), $rawDate.Substring(6,2), $rawDate.Substring(8,2), $rawDate.Substring(10,2), $rawDate.Substring(12,2)
+                        } else {
+                            $row[$columnName] = $value
+                        }
+                    }
+                }
                 $rows += ,$row
             }
         } finally { $reader.Dispose() }
@@ -193,20 +210,46 @@ function Get-SqlAdditionalBasicDatasetDefinition {
         "coilSalePriceHistory" { return @{ table = "coilpricehistory"; title = "钢卷历史销售价"; description = "钢卷历史销售价"; columns = @("钢种", "厚度索引", "宽度索引", "价格", "时间") } }
         "internalSettlementPrices" { return @{ table = "ljhuishoufeiyong"; title = "内部结算价"; description = "内部结算单价配置"; columns = @("hno", "类型", "单价", "单价2", "单价3", "单价4") } }
         "packingFees" { return @{ table = "baozhuangfei"; title = "包装费"; description = "钢种包装费配置"; columns = @("钢种", "高度索引", "宽度索引", "价格") } }
+        "steelmakingCastingConsumptions" { return @{ table = "lgxiaohao"; title = "炼钢连铸消耗"; description = "财务转账的炼钢与连铸消耗实绩"; columns = @("序号", "开始时间", "结束时间", "耗材序号", "区域", "产品", "量", "金额") } }
+        "coilConsumptions" { return @{ table = "ljxiaohao"; title = "炉卷消耗"; description = "财务转账的炉卷消耗实绩"; columns = @("序号", "开始时间", "结束时间", "耗材序号", "产品", "量", "金额") } }
+        "rollingConsumptions" { return @{ table = "xiaohao"; title = "1780 消耗"; description = "财务转账的1780消耗实绩"; columns = @("序号", "开始时间", "结束时间", "耗材序号", "产品", "量", "金额") } }
+        "electricityActuals" { return @{ table = "dianhaoshiji"; title = "电耗实绩"; description = "按电路与日期记录的电能消耗实绩"; columns = @("circuitry", "日期", "zx_yg_z", "zx_yg_j", "zx_yg_f", "zx_yg_p", "zx_yg_g", "分配比例", "分配总量") } }
+        "dailyElectricityConsumptions" { return @{ table = "dianhaodaily"; title = "每日电耗"; description = "按区域记录的每日电能消耗"; columns = @("hno", "measured", "日期", "区域", "zx_yg_j", "zx_yg_f", "zx_yg_p", "zx_yg_g", "量", "金额") } }
+        "mediumConsumptions" { return @{ table = "tnengyuan"; title = "介质消耗"; description = "能源介质日消耗实绩"; columns = @("matname", "日期", "mpname", "balance2") } }
+        "rzRejudgeActuals" { return @{ table = "tmmhr96"; title = "1780 改判"; description = "1780 钢卷改判实绩"; columns = @("创建时间", "钢卷号", "钢种", "原钢种", "钢卷厚度", "钢卷宽度", "钢卷长度", "钢卷重量", "价格", "原价格", "生产时间", "处理标记") } }
+        "rzCoilActuals" { return @{ table = "tmmhr21"; title = "钢卷实绩"; description = "1780 钢卷生产实绩"; columns = @("cust_out_mat_no", "cust_in_mat_no", "in_mat_thick", "in_mat_width", "in_mat_len", "in_mat_wt", "mat_act_thick", "mat_act_width", "mat_act_len", "mat_act_wt", "prod_time") } }
+        "ljRejudgeActuals" { return @{ table = "tmmhp96"; title = "炉卷改判实绩"; description = "炉卷钢板改判实绩"; columns = @("创建时间", "钢卷号", "钢种", "原钢种", "厚度", "宽度", "长度", "重量", "生产时间", "事件号", "flag", "厚度索引", "宽度索引", "roll_type", "cut_type") } }
+        "ljProductionActuals" { return @{ table = "ljshiji"; title = "炉卷实绩"; description = "炉卷生产实绩"; columns = @("板坯号", "板坯厚度", "板坯宽度", "板坯长度", "板坯重量", "钢号", "班次", "班组", "生产时间", "母版号", "钢板实际厚度", "钢板实际宽度", "钢板实际长度", "钢板理论重量", "钢种", "加热时间", "轧制时间", "轧制方式", "切边毛边", "入库时间", "净重", "原钢种", "厚度索引", "宽度索引", "关联钢种", "品种", "系列", "标记", "gaipanliang", "fur_no", "成材率") } }
+        "ljRollingActuals" { return @{ table = "tmmhp21"; title = "炉卷轧制实绩"; description = "炉卷轧制生产实绩"; columns = @("班组", "生产时间", "母版号", "钢板实际厚度", "钢板实际宽度", "钢板实际长度", "钢板理论重量", "钢种", "加热时间", "轧制时间", "轧制方式", "切边毛边", "入库时间", "净重", "原钢种", "厚度索引", "宽度索引", "关联钢种", "品种", "系列", "标记", "gaipanliang", "fur_no") } }
+        "ljSubplateActuals" { return @{ table = "tmmhp01"; title = "炉卷子板实绩"; description = "炉卷子板生产实绩"; columns = @("mat_no", "cust_mat_nop", "sg_sign", "mat_act_thick", "mat_act_width", "mat_act_len", "mat_act_wt", "mat_theory_wt", "prod_time", "with_side_flag", "surface_device_code", "complex_device_code", "st_no", "stock_no", "cust_mat_no1", "flag") } }
+        "rzRollConsumptions" { return @{ table = "zhagun"; title = "1780 轧辊消耗"; description = "1780 轧辊消耗实绩，当前为空表"; columns = @("轧辊编号", "消耗时间", "消耗量", "备注") } }
+        "ljRollConsumptions" { return @{ table = "ljzhagun"; title = "炉卷轧辊消耗"; description = "炉卷轧辊消耗实绩，当前为空表"; columns = @("轧辊编号", "消耗时间", "消耗量", "备注") } }
+        "steelmakingCostTotals" { return @{ table = "liangangchengbentotal"; title = "炼钢成本总表"; description = "炼钢实时成本汇总结果"; columns = @(); readonly = $true } }
+        "steelmakingCostDetails" { return @{ table = "liangangchengbendetail"; title = "炼钢成本明细表"; description = "炼钢实时成本明细结果，当前暂无数据"; columns = @(); readonly = $true } }
+        "coilCostTotals" { return @{ table = "ljchengbenzongbiao"; title = "炉卷成本计算"; description = "炉卷实时成本计算结果"; columns = @(); readonly = $true } }
+        "steelmakingProductionReceipts" { return @{ table = "lgproduct"; title = "接收炼钢生产实绩"; description = "接收炼钢生产实绩数据"; columns = @(); readonly = $true } }
         default { return $null }
     }
+}
+
+function Resolve-SqlDatasetColumns {
+    param([string]$ConnectionString, $Definition)
+    if ($Definition.columns -and @($Definition.columns).Count -gt 0) { return @($Definition.columns) }
+    $rows = Invoke-SqlRows $ConnectionString "SELECT COLUMN_NAME AS column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'dbo' AND TABLE_NAME = @table AND COLUMN_NAME NOT IN (N'id', N'created_at', N'updated_at') ORDER BY ORDINAL_POSITION" @{ "@table" = $Definition.table }
+    return @($rows | ForEach-Object { [string]$_.column_name })
 }
 
 function Get-SqlAdditionalBasicDataset {
     param([string]$ConnectionString, [string]$Name)
     $definition = Get-SqlAdditionalBasicDatasetDefinition $Name
     if (-not $definition) { throw "Unsupported basic dataset: $Name" }
-    $columnsSql = ($definition.columns | ForEach-Object { "[$_]" }) -join ", "
+    $columns = Resolve-SqlDatasetColumns $ConnectionString $definition
+    $columnsSql = ($columns | ForEach-Object { "[$_]" }) -join ", "
     $rows = Invoke-SqlRows $ConnectionString "SELECT id, $columnsSql FROM dbo.$($definition.table) ORDER BY id"
     return [ordered]@{
         name = $Name
         rows = $rows
-        meta = [ordered]@{ title = $definition.title; description = $definition.description; tableName = $definition.table; readonly = $false; collectable = $false; count = $rows.Count; columns = @("id") + @($definition.columns) }
+        meta = [ordered]@{ title = $definition.title; description = $definition.description; tableName = $definition.table; readonly = if ($definition.readonly) { $true } else { $false }; collectable = $false; count = $rows.Count; columns = @("id") + @($columns) }
     }
 }
 

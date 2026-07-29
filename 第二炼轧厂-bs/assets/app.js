@@ -110,23 +110,23 @@
       id: "actuals",
       label: "实绩表",
       children: [
-        { id: "financial-transfer", label: "财务转账消耗表", children: [{ id: "steelmaking-casting-consumption", label: "炼钢连铸消耗", pageId: "steelmakingFixedConsumption" }, { id: "lj-consumption", label: "炉卷消耗", pageId: "otherConsumptions" }, { id: "rz-consumption", label: "1780 消耗", pageId: "otherConsumptions" }] },
-        { id: "electric-actuals", label: "电能消耗" },
+        { id: "financial-transfer", label: "财务转账消耗表", children: [{ id: "steelmaking-casting-consumption", label: "炼钢连铸消耗", pageId: "steelmaking-casting-consumption" }, { id: "lj-consumption", label: "炉卷消耗", pageId: "lj-consumption" }, { id: "rz-consumption", label: "1780 消耗", pageId: "rz-consumption" }] },
+        { id: "electric-actuals", label: "电能消耗", children: [{ id: "electricity-actuals", label: "电耗实绩", pageId: "electricity-actuals" }, { id: "daily-electricity", label: "每日电耗", pageId: "daily-electricity" }] },
         { id: "recycle-actuals", label: "回收实绩", children: [{ id: "rz-recycle", label: "1780 回收", pageId: "recycleEntries" }, { id: "meter-recycle", label: "广义计量回收", pageId: "recycleEntries" }, { id: "lj-recycle", label: "炉卷回收", pageId: "recycleEntries" }] },
-        { id: "medium-actuals", label: "介质消耗" },
+        { id: "medium-actuals", label: "介质消耗", pageId: "medium-actuals" },
         { id: "production-actuals", label: "生产实绩", children: [
-          { id: "rz-production", label: "1780 生产实绩", children: [{ id: "rz-rejudge", label: "1780 改判", pageId: "recycleEntries" }, { id: "coil-actuals", label: "钢卷实绩", pageId: "rzActuals" }, { id: "release-confirm", label: "准发确认", pageId: "rzActuals" }] },
+          { id: "rz-production", label: "1780 生产实绩", children: [{ id: "rz-rejudge", label: "1780 改判", pageId: "rz-rejudge" }, { id: "coil-actuals", label: "钢卷实绩", pageId: "coil-actuals" }, { id: "release-confirm", label: "准发确认", pageId: "rzActuals" }] },
           { id: "steelmaking-production", label: "炼钢生产实绩", children: [{ id: "lf-actuals", label: "LF 炉实绩", pageId: "steelmakingActuals" }, { id: "rh-actuals", label: "RH 炉实绩", pageId: "steelmakingActuals" }, { id: "vd-actuals", label: "VD 炉实绩", pageId: "steelmakingActuals" }, { id: "casting-actuals", label: "浇注实绩", pageId: "steelmakingActuals" }, { id: "steelmaking-actuals", label: "炼钢实绩", pageId: "steelmakingActuals" }, { id: "steelmaking-statistics", label: "炼钢统计", pageId: "steelmakingActuals" }, { id: "steelmaking-consumption-actuals", label: "炼钢消耗实绩", pageId: "steelmakingFixedConsumption" }, { id: "heat-grade-process", label: "炉次钢种子工序实绩", pageId: "steelmakingActuals" }, { id: "steelmaking-plan", label: "炼钢计划表", pageId: "steelmakingActuals" }, { id: "cutting-actuals", label: "切断实绩", pageId: "steelmakingActuals" }, { id: "desulfurization-actuals", label: "脱硫实绩", pageId: "steelmakingActuals" }, { id: "raw-material-actuals", label: "原料消耗", pageId: "steelmakingActuals" }, { id: "converter-actuals", label: "转炉实绩", pageId: "steelmakingActuals" }] },
-          { id: "lj-production", label: "炉卷生产实绩", pageId: "ljActuals" }
+          { id: "lj-production", label: "炉卷生产实绩", children: [{ id: "lj-rejudge", label: "改判实绩", pageId: "lj-rejudge" }, { id: "lj-scrap", label: "炉卷废品表" }, { id: "lj-actuals", label: "炉卷实绩", pageId: "lj-actuals" }, { id: "lj-rolling", label: "轧制实绩", pageId: "lj-rolling" }, { id: "lj-subplate", label: "子板实绩", pageId: "lj-subplate" }] }
         ] },
-        { id: "roll-actuals", label: "轧辊消耗实绩", children: [{ id: "rz-roll-actuals", label: "1780 轧辊消耗", pageId: "otherConsumptions" }, { id: "lj-roll-actuals", label: "炉卷轧辊消耗", pageId: "otherConsumptions" }] }
+        { id: "roll-actuals", label: "轧辊消耗实绩", children: [{ id: "rz-roll-actuals", label: "1780 轧辊消耗", pageId: "rz-roll-actuals" }, { id: "lj-roll-actuals", label: "炉卷轧辊消耗", pageId: "lj-roll-actuals" }] }
       ]
     },
     {
       id: "realtime-cost",
       label: "实时成本",
       children: [
-        { id: "cost-calculation", label: "成本计算", children: [{ id: "steelmaking-cost-calc", label: "炼钢成本计算", pageId: "steelmakingPrices" }, { id: "rz-cost-calc", label: "1780 成本计算" }, { id: "lj-cost-calc", label: "炉卷成本计算" }, { id: "receive-steelmaking-actuals", label: "接收炼钢生产实绩", pageId: "steelmakingActuals" }, { id: "receive-steelmaking-consumption", label: "接收炼钢消耗与产量", pageId: "steelmakingFixedConsumption" }, { id: "rz-stop-cost", label: "1780 停产消耗计算" }] },
+        { id: "cost-calculation", label: "成本计算", children: [{ id: "steelmaking-cost-calc", label: "炼钢成本计算", children: [{ id: "steelmaking-cost-total", label: "炼钢成本总表", pageId: "steelmaking-cost-total" }, { id: "steelmaking-cost-detail", label: "炼钢成本明细表", pageId: "steelmaking-cost-detail" }] }, { id: "rz-cost-calc", label: "1780 成本计算" }, { id: "lj-cost-calc", label: "炉卷成本计算", pageId: "coil-cost-calc" }, { id: "receive-steelmaking-actuals", label: "接收炼钢生产实绩", pageId: "receive-steelmaking-actuals" }, { id: "receive-steelmaking-consumption", label: "接收炼钢消耗与产量", pageId: "steelmakingFixedConsumption" }, { id: "rz-stop-cost", label: "1780 停产消耗计算" }] },
         { id: "history-cost", label: "历史成本", children: [{ id: "rz-history-cost", label: "1780 历史成本" }, { id: "steelmaking-history-cost", label: "炼钢历史成本", pageId: "steelmakingPrices" }, { id: "lj-history-cost", label: "炉卷历史成本" }] }
       ]
     },
@@ -188,6 +188,24 @@
   pageMap["coil-history-sale-price"] = { id: "coil-history-sale-price", title: "钢卷历史销售价", kind: "dataset", dataset: "coilSalePriceHistory" };
   pageMap["internal-price"] = { id: "internal-price", title: "内部结算价", kind: "dataset", dataset: "internalSettlementPrices" };
   pageMap["packing-fee"] = { id: "packing-fee", title: "包装费", kind: "dataset", dataset: "packingFees" };
+  pageMap["steelmaking-casting-consumption"] = { id: "steelmaking-casting-consumption", title: "炼钢连铸消耗", kind: "dataset", dataset: "steelmakingCastingConsumptions" };
+  pageMap["lj-consumption"] = { id: "lj-consumption", title: "炉卷消耗", kind: "dataset", dataset: "coilConsumptions" };
+  pageMap["rz-consumption"] = { id: "rz-consumption", title: "1780 消耗", kind: "dataset", dataset: "rollingConsumptions" };
+  pageMap["electricity-actuals"] = { id: "electricity-actuals", title: "电耗实绩", kind: "dataset", dataset: "electricityActuals" };
+  pageMap["daily-electricity"] = { id: "daily-electricity", title: "每日电耗", kind: "dataset", dataset: "dailyElectricityConsumptions" };
+  pageMap["medium-actuals"] = { id: "medium-actuals", title: "介质消耗", kind: "dataset", dataset: "mediumConsumptions" };
+  pageMap["rz-rejudge"] = { id: "rz-rejudge", title: "1780 改判", kind: "dataset", dataset: "rzRejudgeActuals" };
+  pageMap["coil-actuals"] = { id: "coil-actuals", title: "钢卷实绩", kind: "dataset", dataset: "rzCoilActuals" };
+  pageMap["lj-rejudge"] = { id: "lj-rejudge", title: "炉卷改判实绩", kind: "dataset", dataset: "ljRejudgeActuals" };
+  pageMap["lj-actuals"] = { id: "lj-actuals", title: "炉卷实绩", kind: "dataset", dataset: "ljProductionActuals" };
+  pageMap["lj-rolling"] = { id: "lj-rolling", title: "炉卷轧制实绩", kind: "dataset", dataset: "ljRollingActuals" };
+  pageMap["lj-subplate"] = { id: "lj-subplate", title: "炉卷子板实绩", kind: "dataset", dataset: "ljSubplateActuals" };
+  pageMap["rz-roll-actuals"] = { id: "rz-roll-actuals", title: "1780 轧辊消耗", kind: "dataset", dataset: "rzRollConsumptions" };
+  pageMap["lj-roll-actuals"] = { id: "lj-roll-actuals", title: "炉卷轧辊消耗", kind: "dataset", dataset: "ljRollConsumptions" };
+  pageMap["steelmaking-cost-total"] = { id: "steelmaking-cost-total", title: "炼钢成本总表", kind: "dataset", dataset: "steelmakingCostTotals" };
+  pageMap["steelmaking-cost-detail"] = { id: "steelmaking-cost-detail", title: "炼钢成本明细表", kind: "dataset", dataset: "steelmakingCostDetails" };
+  pageMap["coil-cost-calc"] = { id: "coil-cost-calc", title: "炉卷成本计算", kind: "dataset", dataset: "coilCostTotals" };
+  pageMap["receive-steelmaking-actuals"] = { id: "receive-steelmaking-actuals", title: "接收炼钢生产实绩", kind: "dataset", dataset: "steelmakingProductionReceipts" };
   var LAST_PAGE_STORAGE_KEY = "second-rolling-last-page";
   var SESSION_STORAGE_KEY = "second-rolling-session";
 
@@ -200,6 +218,7 @@
     bootstrap: null,
     datasets: {},
     datasetQueries: {},
+    datasetDateFilters: {},
     selectedRows: {},
     drafts: {},
     costRun: {
@@ -661,7 +680,7 @@
     meta = payload.meta || {};
     columns = meta.columns || inferColumns(rows);
     query = state.datasetQueries[page.dataset] || "";
-    visibleRows = filterRows(rows, query);
+    visibleRows = filterDatasetRows(page.dataset, rows, query);
     selectedId = state.selectedRows[page.dataset];
     selectedRow = findRowById(rows, selectedId) || (rows.length ? rows[0] : null);
     draft = state.drafts[page.dataset] || cloneRow(selectedRow || makeEmptyRow(columns));
@@ -676,6 +695,11 @@
       html.push('<button class="secondary-btn" data-action="collect-row" data-dataset="' + safe(page.dataset) + '">模拟采集</button>');
     }
     html.push('<label class="table-search"><span>查询</span><input type="search" placeholder="输入关键字" value="' + safeInputValue(query) + '" data-query-dataset="' + safe(page.dataset) + '"></label>');
+    if (isActualDataset(page.dataset)) {
+      var dateFilter = state.datasetDateFilters[page.dataset] || {};
+      html.push('<label class="table-search"><span>开始日期</span><input type="date" value="' + safeInputValue(dateFilter.start || "") + '" data-date-start-dataset="' + safe(page.dataset) + '"></label>');
+      html.push('<label class="table-search"><span>截至日期</span><input type="date" value="' + safeInputValue(dateFilter.end || "") + '" data-date-end-dataset="' + safe(page.dataset) + '"></label>');
+    }
     html.push('<button class="secondary-btn" data-action="import-excel" data-dataset="' + safe(page.dataset) + '">导入 Excel</button><input class="file-input" type="file" accept=".csv,.tsv,.txt,.xls" data-file-dataset="' + safe(page.dataset) + '">');
     html.push('<button class="secondary-btn" data-action="export-excel" data-dataset="' + safe(page.dataset) + '">导出 Excel</button>');
     html.push('<span class="mock-chip" data-dataset-count="' + safe(page.dataset) + '">显示 ' + safe(String(visibleRows.length)) + ' / ' + safe(String(rows.length)) + ' 条</span></div>');
@@ -929,6 +953,13 @@
     bindInputs("[data-query-dataset]", function (input) {
       var dataset = input.getAttribute("data-query-dataset");
       state.datasetQueries[dataset] = input.value;
+      updateDatasetFilter(dataset);
+    });
+
+    bindInputs("[data-date-start-dataset], [data-date-end-dataset]", function (input) {
+      var dataset = input.getAttribute("data-date-start-dataset") || input.getAttribute("data-date-end-dataset");
+      if (!state.datasetDateFilters[dataset]) { state.datasetDateFilters[dataset] = {}; }
+      if (input.getAttribute("data-date-start-dataset")) { state.datasetDateFilters[dataset].start = input.value; } else { state.datasetDateFilters[dataset].end = input.value; }
       updateDatasetFilter(dataset);
     });
 
@@ -1294,6 +1325,26 @@
     });
   }
 
+  function isActualDataset(dataset) {
+    return ["steelmakingCastingConsumptions", "coilConsumptions", "rollingConsumptions", "electricityActuals", "dailyElectricityConsumptions", "mediumConsumptions", "rzRejudgeActuals", "rzCoilActuals", "ljRejudgeActuals", "ljProductionActuals", "ljRollingActuals", "ljSubplateActuals", "rzRollConsumptions", "ljRollConsumptions", "steelmakingProductionReceipts"].indexOf(dataset) >= 0;
+  }
+
+  function normalizeActualDate(value) {
+    var text = String(value === null || value === undefined ? "" : value).trim();
+    var matched = text.match(/^(\d{4})[-\/]?(\d{2})[-\/]?(\d{2})/);
+    return matched ? matched[1] + "-" + matched[2] + "-" + matched[3] : "";
+  }
+
+  function filterDatasetRows(dataset, rows, query) {
+    var filtered = filterRows(rows, query);
+    var range = state.datasetDateFilters[dataset] || {};
+    if (!isActualDataset(dataset) || (!range.start && !range.end)) { return filtered; }
+    return filtered.filter(function (row) {
+      var date = normalizeActualDate(row["日期"] || row["开始时间"] || row["生产时刻"] || row["生产时间"] || row.prod_time || row.date || row.start || row["转炉开始"]);
+      return date && (!range.start || date >= range.start) && (!range.end || date <= range.end);
+    });
+  }
+
   function renderDatasetTableRows(dataset, rows, columns, selectedId) {
     var html = [];
     each(rows, function (row) {
@@ -1311,7 +1362,7 @@
     var meta = payload && payload.meta ? payload.meta : {};
     var rows = payload && payload.rows ? payload.rows : [];
     var columns = meta.columns || inferColumns(rows);
-    var visibleRows = filterRows(rows, state.datasetQueries[dataset] || "");
+    var visibleRows = filterDatasetRows(dataset, rows, state.datasetQueries[dataset] || "");
     var body = app.querySelector('[data-dataset-rows="' + dataset + '"]');
     var count = app.querySelector('[data-dataset-count="' + dataset + '"]');
     if (body) {
@@ -1374,7 +1425,7 @@
 
   function exportExcelFile(dataset) {
     var payload = state.datasets[dataset];
-    var rows = filterRows(payload ? payload.rows : [], state.datasetQueries[dataset] || "");
+    var rows = filterDatasetRows(dataset, payload ? payload.rows : [], state.datasetQueries[dataset] || "");
     var columns = payload && payload.meta ? payload.meta.columns : inferColumns(rows);
     var lines = [columns.map(excelCell).join("\t")];
     rows.forEach(function (row) {

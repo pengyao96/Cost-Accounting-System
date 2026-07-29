@@ -32,6 +32,24 @@
         coilSalePriceHistory = @{ title = "钢卷历史销售价"; description = "钢卷历史销售价"; tableName = "coilpricehistory"; readonly = $false; collectable = $false }
         internalSettlementPrices = @{ title = "内部结算价"; description = "内部结算单价配置"; tableName = "ljhuishoufeiyong"; readonly = $false; collectable = $false }
         packingFees = @{ title = "包装费"; description = "钢种包装费配置"; tableName = "baozhuangfei"; readonly = $false; collectable = $false }
+        steelmakingCastingConsumptions = @{ title = "炼钢连铸消耗"; description = "财务转账的炼钢与连铸消耗实绩"; tableName = "lgxiaohao"; readonly = $false; collectable = $false }
+        coilConsumptions = @{ title = "炉卷消耗"; description = "财务转账的炉卷消耗实绩"; tableName = "ljxiaohao"; readonly = $false; collectable = $false }
+        rollingConsumptions = @{ title = "1780 消耗"; description = "财务转账的1780消耗实绩"; tableName = "xiaohao"; readonly = $false; collectable = $false }
+        electricityActuals = @{ title = "电耗实绩"; description = "按电路与日期记录的电能消耗实绩"; tableName = "dianhaoshiji"; readonly = $false; collectable = $false }
+        dailyElectricityConsumptions = @{ title = "每日电耗"; description = "按区域记录的每日电能消耗"; tableName = "dianhaodaily"; readonly = $false; collectable = $false }
+        mediumConsumptions = @{ title = "介质消耗"; description = "能源介质日消耗实绩"; tableName = "tnengyuan"; readonly = $false; collectable = $false }
+        rzRejudgeActuals = @{ title = "1780 改判"; description = "1780 钢卷改判实绩"; tableName = "tmmhr96"; readonly = $false; collectable = $false }
+        rzCoilActuals = @{ title = "钢卷实绩"; description = "1780 钢卷生产实绩"; tableName = "tmmhr21"; readonly = $false; collectable = $false }
+        ljRejudgeActuals = @{ title = "炉卷改判实绩"; description = "炉卷钢板改判实绩"; tableName = "tmmhp96"; readonly = $false; collectable = $false }
+        ljProductionActuals = @{ title = "炉卷实绩"; description = "炉卷生产实绩"; tableName = "ljshiji"; readonly = $false; collectable = $false }
+        ljRollingActuals = @{ title = "炉卷轧制实绩"; description = "炉卷轧制生产实绩"; tableName = "tmmhp21"; readonly = $false; collectable = $false }
+        ljSubplateActuals = @{ title = "炉卷子板实绩"; description = "炉卷子板生产实绩"; tableName = "tmmhp01"; readonly = $false; collectable = $false }
+        rzRollConsumptions = @{ title = "1780 轧辊消耗"; description = "1780 轧辊消耗实绩，当前为空表"; tableName = "zhagun"; readonly = $false; collectable = $false }
+        ljRollConsumptions = @{ title = "炉卷轧辊消耗"; description = "炉卷轧辊消耗实绩，当前为空表"; tableName = "ljzhagun"; readonly = $false; collectable = $false }
+        steelmakingCostTotals = @{ title = "炼钢成本总表"; description = "炼钢实时成本汇总结果"; tableName = "liangangchengbentotal"; readonly = $true; collectable = $false }
+        steelmakingCostDetails = @{ title = "炼钢成本明细表"; description = "炼钢实时成本明细结果，当前暂无数据"; tableName = "liangangchengbendetail"; readonly = $true; collectable = $false }
+        coilCostTotals = @{ title = "炉卷成本计算"; description = "炉卷实时成本计算结果"; tableName = "ljchengbenzongbiao"; readonly = $true; collectable = $false }
+        steelmakingProductionReceipts = @{ title = "接收炼钢生产实绩"; description = "接收炼钢生产实绩数据"; tableName = "lgproduct"; readonly = $true; collectable = $false }
         steelmakingGrades = @{ title = "炼钢钢种基础数据"; description = "炼钢钢种与系列；为1780和炉卷提供炼钢水平附加的关联基础"; readonly = $false; collectable = $false }
         steelmakingRoutes = @{ title = "炼钢路径表"; description = "钢种对应的精炼路径与连铸号"; readonly = $false; collectable = $false }
         steelmakingPrices = @{ title = "炼钢计划价与水平附加"; description = "铁水、合金料计划价及炼钢降本增效形成的板坯水平附加"; readonly = $false; collectable = $false }
@@ -100,6 +118,24 @@
             coilThicknessIndexes = @(
                 @{ id = 1; 厚度索引 = "1"; 厚度起 = 1.2; 厚度尾 = 1.6; 厚度范围 = "(1.2,1.6]" }
             )
+            steelmakingCastingConsumptions = @()
+            coilConsumptions = @()
+            rollingConsumptions = @()
+            electricityActuals = @()
+            dailyElectricityConsumptions = @()
+            mediumConsumptions = @()
+            rzRejudgeActuals = @()
+            rzCoilActuals = @()
+            ljRejudgeActuals = @()
+            ljProductionActuals = @()
+            ljRollingActuals = @()
+            ljSubplateActuals = @()
+            rzRollConsumptions = @()
+            ljRollConsumptions = @()
+            steelmakingCostTotals = @()
+            steelmakingCostDetails = @()
+            coilCostTotals = @()
+            steelmakingProductionReceipts = @()
             slabWidthIndexes = @()
             plateWidthIndexes = @(
                 @{ id = 1; 宽度索引 = "1"; 起始 = 800; 结束 = 2000 }
