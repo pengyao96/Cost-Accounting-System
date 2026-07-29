@@ -46,10 +46,10 @@
         ljSubplateActuals = @{ title = "炉卷子板实绩"; description = "炉卷子板生产实绩"; tableName = "tmmhp01"; readonly = $false; collectable = $false }
         rzRollConsumptions = @{ title = "1780 轧辊消耗"; description = "1780 轧辊消耗实绩，当前为空表"; tableName = "zhagun"; readonly = $false; collectable = $false }
         ljRollConsumptions = @{ title = "炉卷轧辊消耗"; description = "炉卷轧辊消耗实绩，当前为空表"; tableName = "ljzhagun"; readonly = $false; collectable = $false }
-        steelmakingCostTotals = @{ title = "炼钢成本总表"; description = "炼钢实时成本汇总结果"; tableName = "liangangchengbentotal"; readonly = $true; collectable = $false }
-        steelmakingCostDetails = @{ title = "炼钢成本明细表"; description = "炼钢实时成本明细结果，当前暂无数据"; tableName = "liangangchengbendetail"; readonly = $true; collectable = $false }
-        coilCostTotals = @{ title = "炉卷成本计算"; description = "炉卷实时成本计算结果"; tableName = "ljchengbenzongbiao"; readonly = $true; collectable = $false }
-        steelmakingProductionReceipts = @{ title = "接收炼钢生产实绩"; description = "接收炼钢生产实绩数据"; tableName = "lgproduct"; readonly = $true; collectable = $false }
+        steelmakingCostTotals = @{ title = "炼钢成本总表"; description = "炼钢实时成本汇总结果"; tableName = "liangangchengbentotal"; readonly = $false; collectable = $false }
+        steelmakingCostDetails = @{ title = "炼钢成本明细表"; description = "炼钢实时成本明细结果，当前暂无数据"; tableName = "liangangchengbendetail"; readonly = $false; collectable = $false }
+        coilCostTotals = @{ title = "炉卷成本计算"; description = "炉卷实时成本计算结果"; tableName = "ljchengbenzongbiao"; readonly = $false; collectable = $false }
+        steelmakingProductionReceipts = @{ title = "接收炼钢生产实绩"; description = "接收炼钢生产实绩数据"; tableName = "lgproduct"; readonly = $false; collectable = $false }
         steelmakingGrades = @{ title = "炼钢钢种基础数据"; description = "炼钢钢种与系列；为1780和炉卷提供炼钢水平附加的关联基础"; readonly = $false; collectable = $false }
         steelmakingRoutes = @{ title = "炼钢路径表"; description = "钢种对应的精炼路径与连铸号"; readonly = $false; collectable = $false }
         steelmakingPrices = @{ title = "炼钢计划价与水平附加"; description = "铁水、合金料计划价及炼钢降本增效形成的板坯水平附加"; readonly = $false; collectable = $false }

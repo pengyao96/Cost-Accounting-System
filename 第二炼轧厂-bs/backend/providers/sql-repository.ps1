@@ -224,10 +224,10 @@ function Get-SqlAdditionalBasicDatasetDefinition {
         "ljSubplateActuals" { return @{ table = "tmmhp01"; title = "炉卷子板实绩"; description = "炉卷子板生产实绩"; columns = @("mat_no", "cust_mat_nop", "sg_sign", "mat_act_thick", "mat_act_width", "mat_act_len", "mat_act_wt", "mat_theory_wt", "prod_time", "with_side_flag", "surface_device_code", "complex_device_code", "st_no", "stock_no", "cust_mat_no1", "flag") } }
         "rzRollConsumptions" { return @{ table = "zhagun"; title = "1780 轧辊消耗"; description = "1780 轧辊消耗实绩，当前为空表"; columns = @("轧辊编号", "消耗时间", "消耗量", "备注") } }
         "ljRollConsumptions" { return @{ table = "ljzhagun"; title = "炉卷轧辊消耗"; description = "炉卷轧辊消耗实绩，当前为空表"; columns = @("轧辊编号", "消耗时间", "消耗量", "备注") } }
-        "steelmakingCostTotals" { return @{ table = "liangangchengbentotal"; title = "炼钢成本总表"; description = "炼钢实时成本汇总结果"; columns = @(); readonly = $true } }
-        "steelmakingCostDetails" { return @{ table = "liangangchengbendetail"; title = "炼钢成本明细表"; description = "炼钢实时成本明细结果，当前暂无数据"; columns = @(); readonly = $true } }
-        "coilCostTotals" { return @{ table = "ljchengbenzongbiao"; title = "炉卷成本计算"; description = "炉卷实时成本计算结果"; columns = @(); readonly = $true } }
-        "steelmakingProductionReceipts" { return @{ table = "lgproduct"; title = "接收炼钢生产实绩"; description = "接收炼钢生产实绩数据"; columns = @(); readonly = $true } }
+        "steelmakingCostTotals" { return @{ table = "liangangchengbentotal"; title = "炼钢成本总表"; description = "炼钢实时成本汇总结果"; columns = @(); readonly = $false } }
+        "steelmakingCostDetails" { return @{ table = "liangangchengbendetail"; title = "炼钢成本明细表"; description = "炼钢实时成本明细结果，当前暂无数据"; columns = @(); readonly = $false } }
+        "coilCostTotals" { return @{ table = "ljchengbenzongbiao"; title = "炉卷成本计算"; description = "炉卷实时成本计算结果"; columns = @(); readonly = $false } }
+        "steelmakingProductionReceipts" { return @{ table = "lgproduct"; title = "接收炼钢生产实绩"; description = "接收炼钢生产实绩数据"; columns = @(); readonly = $false } }
         default { return $null }
     }
 }
@@ -339,7 +339,7 @@ function New-SqlRepository {
         }
         if (Get-SqlAdditionalBasicDatasetDefinition $Name) {
             $definition = Get-SqlAdditionalBasicDatasetDefinition $Name
-            $id = [int]$Payload.id; $columns = @($definition.columns); $parameters = @{}
+            $id = [int]$Payload.id; $columns = @(Resolve-SqlDatasetColumns $this.SqlConnectionString $definition); $parameters = @{}
             for ($index = 0; $index -lt $columns.Count; $index += 1) {
                 $property = $Payload.PSObject.Properties[$columns[$index]]
                 $value = if ($property) { $property.Value } else { $null }

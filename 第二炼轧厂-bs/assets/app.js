@@ -9,52 +9,31 @@
     : "http://127.0.0.1:8091/api";
   var DEBUG_AUTO_LOGIN = true;
 
-  var navGroups = [
-    {
-      label: "总览",
-      items: [{ id: "dashboard", title: "系统总览", kind: "dashboard" }]
-    },
-    {
-      label: "1780 精量化成本",
-      items: [
+  // These pages are shared by legacy menu entries and the current tree menu.
+  // Keeping the registry flat makes page-to-feature mapping straightforward.
+  var registeredPages = [
+      { id: "dashboard", title: "系统总览", kind: "dashboard" },
         { id: "planPriceRz", title: "基础数据：板坯计划价", kind: "dataset", dataset: "planPriceRz" },
         { id: "samplePriceRz", title: "基础数据：试样/包装费", kind: "dataset", dataset: "samplePriceRz" },
         { id: "rzActuals", title: "实绩：准发与轧制实绩", kind: "dataset", dataset: "rzActuals" },
         { id: "recycleEntries", title: "实绩：回收与改判", kind: "dataset", dataset: "recycleEntries" },
-        { id: "costSummary", title: "成本计算总表", kind: "costSummary" }
-      ]
-    },
-    {
-      label: "炉卷 精量化成本",
-      items: [
+        { id: "costSummary", title: "成本计算总表", kind: "costSummary" },
         { id: "shareRules", title: "基础数据：分摊规则", kind: "dataset", dataset: "shareRules" },
         { id: "planPriceLj", title: "基础数据：板坯计划价", kind: "dataset", dataset: "planPriceLj" },
         { id: "samplePriceLj", title: "基础数据：试样加工费", kind: "dataset", dataset: "samplePriceLj" },
         { id: "ljActuals", title: "实绩：综合信息与轧制", kind: "dataset", dataset: "ljActuals" },
         { id: "otherConsumptions", title: "实绩：固定消耗", kind: "dataset", dataset: "otherConsumptions" },
         { id: "ljScheduleParams", title: "时刻表：节拍参数", kind: "dataset", dataset: "ljScheduleParams" },
-        { id: "ljSchedule", title: "时刻表：排程模拟", kind: "schedule", line: "lj", paramsDataset: "ljScheduleParams" }
-      ]
-    },
-    {
-      label: "炼钢 精量化成本",
-      items: [
+        { id: "ljSchedule", title: "时刻表：排程模拟", kind: "schedule", line: "lj", paramsDataset: "ljScheduleParams" },
         { id: "steelmakingGrades", title: "基础数据：钢种与系列", kind: "dataset", dataset: "steelmakingGrades" },
         { id: "steelmakingRoutes", title: "基础数据：路径表", kind: "dataset", dataset: "steelmakingRoutes" },
         { id: "steelmakingPrices", title: "基础数据：计划价与水平附加", kind: "dataset", dataset: "steelmakingPrices" },
         { id: "steelmakingActuals", title: "实绩：转炉、精炼与连铸", kind: "dataset", dataset: "steelmakingActuals" },
-        { id: "steelmakingFixedConsumption", title: "实绩：固定消耗", kind: "dataset", dataset: "steelmakingFixedConsumption" }
-      ]
-    },
-    {
-      label: "标准成本与辅助功能",
-      items: [
+        { id: "steelmakingFixedConsumption", title: "实绩：固定消耗", kind: "dataset", dataset: "steelmakingFixedConsumption" },
         { id: "standardConditions", title: "标准成本条件", kind: "dataset", dataset: "standardConditions" },
         { id: "standardCost", title: "标准成本结果", kind: "standardCost" },
         { id: "rzScheduleParams", title: "热连轧节拍参数", kind: "dataset", dataset: "rzScheduleParams" },
         { id: "rzSchedule", title: "1780 时刻表模拟", kind: "schedule", line: "rz", paramsDataset: "rzScheduleParams" }
-      ]
-    }
   ];
 
   var navTree = [
@@ -146,10 +125,8 @@
   ];
 
   var pageMap = {};
-  each(navGroups, function (group) {
-    each(group.items, function (item) {
-      pageMap[item.id] = item;
-    });
+  each(registeredPages, function (page) {
+    pageMap[page.id] = page;
   });
 
   var pageMenuPaths = {};
@@ -510,10 +487,10 @@
     } else if (node.pageId) {
       html.push(
         '<button class="tree-leaf ' + (isActive ? "active" : "") + '" data-nav="' + safe(node.pageId) + '">' +
-        '<span class="tree-leaf-dot" aria-hidden="true"></span><span>' + safe(node.label) + "</span></button>"
+        '<span class="tree-caret leaf-caret" aria-hidden="true">▸</span><span>' + safe(node.label) + "</span></button>"
       );
     } else {
-      html.push('<button class="tree-leaf local-placeholder" data-nav="' + safe(node.id) + '"><span class="tree-leaf-dot" aria-hidden="true"></span><span>' + safe(node.label) + "</span></button>");
+      html.push('<button class="tree-leaf local-placeholder" data-nav="' + safe(node.id) + '"><span class="tree-caret leaf-caret" aria-hidden="true">▸</span><span>' + safe(node.label) + "</span></button>");
     }
     html.push("</div>");
     return html.join("");
@@ -685,7 +662,7 @@
     selectedRow = findRowById(rows, selectedId) || (rows.length ? rows[0] : null);
     draft = state.drafts[page.dataset] || cloneRow(selectedRow || makeEmptyRow(columns));
 
-    html.push('<div class="two-column">');
+    html.push('<div class="two-column dataset-layout">');
     html.push('<section class="panel table-panel"><div class="panel-header"><h3>' + safe(meta.title || page.title) + "</h3><p>" + safe(meta.description || "") + (meta.tableName ? ' <span class="table-reference">数据库表：' + safe(meta.tableName) + '</span>' : '') + '</p></div>');
     html.push('<div class="toolbar"><button class="primary-btn" data-action="reload-dataset" data-dataset="' + safe(page.dataset) + '">刷新</button>');
     if (!meta.readonly) {
@@ -711,7 +688,7 @@
     html.push(renderDatasetTableRows(page.dataset, visibleRows, columns, selectedId));
     html.push("</tbody></table></div></section>");
 
-    html.push('<section class="panel"><div class="panel-header"><h3>' + (meta.readonly ? "记录详情" : "记录编辑") + "</h3><p>" + safe(meta.readonly ? "当前数据集只读，未来应由真实采集服务或数据库同步更新。" : "当前会通过 API 保存到 mock 仓储，未来可替换为 SQL 仓储。") + "</p></div>");
+    html.push('<section class="panel editor-panel"><div class="panel-header"><h3>' + (meta.readonly ? "记录详情" : "记录编辑") + "</h3><p>" + safe(meta.readonly ? "当前数据集只读，未来应由真实采集服务或数据库同步更新。" : "当前会通过 API 保存到 mock 仓储，未来可替换为 SQL 仓储。") + "</p></div>");
     if (selectedRow || !meta.readonly) {
       html.push(renderEditor(page.dataset, columns, draft, meta.readonly));
     } else {
