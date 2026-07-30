@@ -65,9 +65,6 @@
         recycleEntries = @{ title = "Recycle Entries"; description = "Recycle and by-product credits"; readonly = $false; collectable = $false }
         ljActuals = @{ title = "LJ Actuals"; description = "Actual production rows for LJ line"; readonly = $false; collectable = $true }
         rzActuals = @{ title = "RZ Actuals"; description = "Actual production rows for RZ line"; readonly = $false; collectable = $true }
-        standardConditions = @{ title = "Standard Cost Conditions"; description = "SC filtering conditions"; readonly = $false; collectable = $false }
-        ljScheduleParams = @{ title = "LJ Schedule Params"; description = "Step duration settings for LJ schedule"; readonly = $false; collectable = $false }
-        rzScheduleParams = @{ title = "RZ Schedule Params"; description = "Step duration settings for RZ schedule"; readonly = $false; collectable = $false }
     }
 
     return [ordered]@{
@@ -254,30 +251,6 @@
                 @{ id = 2; prodTime = "2026-07-07 14:10:00"; prodShiftNo = "M"; prodShiftGroup = "B"; grade = "ST12"; thickIndex = 1; widthIndex = 1; slabWtComd = 25.6; matActWt = 24.1; matNetWt = 23.9; inFurnaceTime = 128; ftRollTime = 40; rollPractDiv = 0; chengcailv = 0.9336 }
                 @{ id = 3; prodTime = "2026-07-10 18:45:00"; prodShiftNo = "N"; prodShiftGroup = "C"; grade = "SPHC"; thickIndex = 2; widthIndex = 2; slabWtComd = 26.8; matActWt = 25.7; matNetWt = 25.4; inFurnaceTime = 124; ftRollTime = 39; rollPractDiv = 0; chengcailv = 0.9478 }
             )
-            standardConditions = @(
-                @{ id = 1; line = "rz"; conditionType = "total_output"; value = 2400; note = "SC total output threshold" }
-                @{ id = 2; line = "rz"; conditionType = "min_grade_output"; value = 2300; note = "SC min single grade threshold" }
-                @{ id = 3; line = "lj"; conditionType = "total_output"; value = 2250; note = "SC total output threshold" }
-                @{ id = 4; line = "lj"; conditionType = "min_grade_output"; value = 2250; note = "SC min single grade threshold" }
-            )
-            ljScheduleParams = @(
-                @{ id = 1; stepCode = "furnace"; stepName = "Furnace"; minutes = 128; note = "func_time" }
-                @{ id = 2; stepCode = "gapFuncMill"; stepName = "Gap To Mill"; minutes = 3; note = "gongxudian" }
-                @{ id = 3; stepCode = "rolling"; stepName = "Rolling"; minutes = 8; note = "mill_time" }
-                @{ id = 4; stepCode = "gapMillCold"; stepName = "Gap To Cold"; minutes = 2; note = "gongxudian" }
-                @{ id = 5; stepCode = "cold"; stepName = "Cold Bed"; minutes = 26; note = "cold_time" }
-                @{ id = 6; stepCode = "finish"; stepName = "Finishing"; minutes = 9; note = "across_or_park" }
-                @{ id = 7; stepCode = "chargeGap"; stepName = "Charge Gap"; minutes = 4; note = "continuous rhythm" }
-            )
-            rzScheduleParams = @(
-                @{ id = 1; stepCode = "furnace"; stepName = "Furnace"; minutes = 112; note = "funcetime" }
-                @{ id = 2; stepCode = "gapFuncMill"; stepName = "Gap To Mill"; minutes = 2; note = "gongxudian" }
-                @{ id = 3; stepCode = "rolling"; stepName = "Rolling"; minutes = 6; note = "ft_roll_time" }
-                @{ id = 4; stepCode = "gapMillCold"; stepName = "Gap To Cold"; minutes = 1; note = "gongxudian" }
-                @{ id = 5; stepCode = "cold"; stepName = "Cooling Coiling"; minutes = 18; note = "post rolling rhythm" }
-                @{ id = 6; stepCode = "finish"; stepName = "Packing"; minutes = 7; note = "packing step" }
-                @{ id = 7; stepCode = "chargeGap"; stepName = "Charge Gap"; minutes = 3; note = "continuous rhythm" }
-            )
         }
         costBaseRows = @(
             @{ id = 1; line = "lj"; period = "2026-07"; grade = "Q235B"; pinzhong = "carbon_steel"; xilie = "low_carbon"; thickness = 1.6; width = 1250; thickIndex = 1; widthIndex = 2; slabWt = 2480; coilWt = 2365; steelmakingCost = 3724; processCost = 668; manufacturingCost = 4852; salePrice = 5070; heatingCost = 132; rollingCost = 186; rollCost = 22; packageCost = 0; sampleCost = 18; otherCost = 310; recycleCredit = -12 }
@@ -287,30 +260,6 @@
             @{ id = 5; line = "rz"; period = "2026-07"; grade = "ST12"; pinzhong = "cold_roll_feed"; xilie = "deep_draw_series"; thickness = 1.4; width = 1380; thickIndex = 1; widthIndex = 1; slabWt = 2560; coilWt = 2392; steelmakingCost = 4098; processCost = 786; manufacturingCost = 5296; salePrice = 5568; heatingCost = 146; rollingCost = 202; rollCost = 27; packageCost = 19; sampleCost = 35; otherCost = 357; recycleCredit = -12 }
             @{ id = 6; line = "rz"; period = "2026-08"; grade = "SPHC"; pinzhong = "hot_roll_commercial"; xilie = "commercial_series"; thickness = 4.2; width = 1500; thickIndex = 2; widthIndex = 2; slabWt = 2680; coilWt = 2528; steelmakingCost = 3894; processCost = 754; manufacturingCost = 5109; salePrice = 5315; heatingCost = 140; rollingCost = 200; rollCost = 25; packageCost = 18; sampleCost = 26; otherCost = 345; recycleCredit = -15 }
         )
-        standardHistory = @(
-            @{ id = 1; line = "rz"; period = "2026-04"; grade = "SPHC"; pinzhong = "hot_roll_commercial"; xilie = "commercial_series"; slabWt = 2550; coilWt = 2435; manufacturingCost = 5120; processCost = 748; yieldRate = 0.9549; sampleCost = 26; packageCost = 18; recycleCredit = -14 }
-            @{ id = 2; line = "rz"; period = "2026-05"; grade = "SPHC"; pinzhong = "hot_roll_commercial"; xilie = "commercial_series"; slabWt = 2640; coilWt = 2518; manufacturingCost = 5078; processCost = 739; yieldRate = 0.9538; sampleCost = 26; packageCost = 18; recycleCredit = -16 }
-            @{ id = 3; line = "rz"; period = "2026-06"; grade = "ST12"; pinzhong = "cold_roll_feed"; xilie = "deep_draw_series"; slabWt = 2580; coilWt = 2404; manufacturingCost = 5322; processCost = 792; yieldRate = 0.9318; sampleCost = 35; packageCost = 19; recycleCredit = -11 }
-            @{ id = 4; line = "rz"; period = "2026-07"; grade = "ST12"; pinzhong = "cold_roll_feed"; xilie = "deep_draw_series"; slabWt = 2620; coilWt = 2456; manufacturingCost = 5291; processCost = 784; yieldRate = 0.9374; sampleCost = 35; packageCost = 19; recycleCredit = -13 }
-            @{ id = 5; line = "lj"; period = "2026-04"; grade = "Q235B"; pinzhong = "carbon_steel"; xilie = "low_carbon"; slabWt = 2400; coilWt = 2292; manufacturingCost = 4826; processCost = 658; yieldRate = 0.9550; sampleCost = 18; packageCost = 0; recycleCredit = -14 }
-            @{ id = 6; line = "lj"; period = "2026-05"; grade = "Q235B"; pinzhong = "carbon_steel"; xilie = "low_carbon"; slabWt = 2460; coilWt = 2351; manufacturingCost = 4802; processCost = 651; yieldRate = 0.9557; sampleCost = 18; packageCost = 0; recycleCredit = -15 }
-            @{ id = 7; line = "lj"; period = "2026-06"; grade = "Q345B"; pinzhong = "alloy_steel"; xilie = "structural_series"; slabWt = 2510; coilWt = 2370; manufacturingCost = 5116; processCost = 728; yieldRate = 0.9442; sampleCost = 24; packageCost = 0; recycleCredit = -10 }
-            @{ id = 8; line = "lj"; period = "2026-07"; grade = "Q345B"; pinzhong = "alloy_steel"; xilie = "structural_series"; slabWt = 2560; coilWt = 2415; manufacturingCost = 5098; processCost = 722; yieldRate = 0.9434; sampleCost = 24; packageCost = 0; recycleCredit = -11 }
-        )
-        schedulePlans = [ordered]@{
-            lj = @(
-                @{ id = 1; slabNo = "LJ260701001"; grade = "Q235B"; thickness = 1.6; width = 1250 }
-                @{ id = 2; slabNo = "LJ260701002"; grade = "Q345B"; thickness = 2.8; width = 1250 }
-                @{ id = 3; slabNo = "LJ260701003"; grade = "Q235B"; thickness = 1.8; width = 1050 }
-                @{ id = 4; slabNo = "LJ260701004"; grade = "Q235B"; thickness = 1.6; width = 1250 }
-            )
-            rz = @(
-                @{ id = 1; slabNo = "RZ260701001"; grade = "SPHC"; thickness = 2.5; width = 1500 }
-                @{ id = 2; slabNo = "RZ260701002"; grade = "ST12"; thickness = 1.4; width = 1380 }
-                @{ id = 3; slabNo = "RZ260701003"; grade = "SPHC"; thickness = 4.2; width = 1500 }
-                @{ id = 4; slabNo = "RZ260701004"; grade = "SPHC"; thickness = 2.5; width = 1500 }
-            )
-        }
         runtime = [ordered]@{
             generatedCostDetails = @{}
         }

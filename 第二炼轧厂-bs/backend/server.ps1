@@ -180,6 +180,15 @@ function Write-Json {
     Write-HttpResponse -Stream $Stream -StatusCode $StatusCode -ContentType "application/json; charset=utf-8" -BodyBytes $bytes
 }
 
+function Read-JsonPayload {
+    param([AllowEmptyString()][string]$BodyText)
+
+    if ([string]::IsNullOrWhiteSpace($BodyText)) {
+        return [ordered]@{}
+    }
+    return ConvertFrom-Json $BodyText
+}
+
 function Write-Text {
     param(
         [Parameter(Mandatory = $true)]$Stream,
@@ -245,31 +254,31 @@ function Handle-Api {
     }
 
     if ($Request.Path -eq "/api/auth/login" -and $Request.Method -eq "POST") {
-        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        $payload = Read-JsonPayload $Request.BodyText
         Write-Json -Stream $Stream -Payload ($script:Repository.Login($payload))
         return
     }
 
     if ($Request.Path -eq "/api/auth/users" -and $Request.Method -eq "POST") {
-        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        $payload = Read-JsonPayload $Request.BodyText
         Write-Json -Stream $Stream -Payload ($script:Repository.GetUsers([string]$payload.token))
         return
     }
 
     if ($Request.Path -eq "/api/auth/users/save" -and $Request.Method -eq "POST") {
-        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        $payload = Read-JsonPayload $Request.BodyText
         Write-Json -Stream $Stream -Payload ($script:Repository.SaveUser([string]$payload.token, $payload.user))
         return
     }
 
     if ($Request.Path -eq "/api/auth/users/delete" -and $Request.Method -eq "POST") {
-        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        $payload = Read-JsonPayload $Request.BodyText
         Write-Json -Stream $Stream -Payload ($script:Repository.DeleteUser([string]$payload.token, [int]$payload.id))
         return
     }
 
     if ($Request.Path -eq "/api/auth/password" -and $Request.Method -eq "POST") {
-        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
+        $payload = Read-JsonPayload $Request.BodyText
         Write-Json -Stream $Stream -Payload ($script:Repository.ChangePassword([string]$payload.token, $payload))
         return
     }
@@ -280,25 +289,17 @@ function Handle-Api {
     }
 
     if ($Request.Path -eq "/api/cost/run" -and $Request.Method -eq "POST") {
-        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
-        Write-Json -Stream $Stream -Payload ($script:Repository.RunCost($payload))
+        $payload = Read-JsonPayload $Request.BodyText
+        [void]$script:Repository.Authorize([string]$payload.token, "cost", "calculate")
+        $result = $script:Repository.RunCost($payload)
+        $script:Repository.Audit([string]$payload.token, "calculate", "cost_batch", [string]$result.batchId, "执行 $($payload.line) 成本核算")
+        Write-Json -Stream $Stream -Payload $result
         return
     }
 
     if ($Request.Path -eq "/api/cost/detail" -and $Request.Method -eq "GET") {
+        [void]$script:Repository.Authorize([string]$Request.Query['token'], "cost", "read")
         Write-Json -Stream $Stream -Payload ($script:Repository.GetCostDetail([string]$Request.Query["detailKey"]))
-        return
-    }
-
-    if ($Request.Path -eq "/api/standard-cost/run" -and $Request.Method -eq "POST") {
-        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
-        Write-Json -Stream $Stream -Payload ($script:Repository.RunStandardCost($payload))
-        return
-    }
-
-    if ($Request.Path -eq "/api/schedules/run" -and $Request.Method -eq "POST") {
-        $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
-        Write-Json -Stream $Stream -Payload ($script:Repository.RunSchedule($payload))
         return
     }
 
@@ -307,23 +308,32 @@ function Handle-Api {
         $datasetName = $segments[2]
 
         if ($Request.Method -eq "GET" -and $segments.Length -eq 3) {
+            [void]$script:Repository.Authorize([string]$Request.Query['token'], "datasets", "read")
             Write-Json -Stream $Stream -Payload ($script:Repository.GetDataset($datasetName))
             return
         }
 
         if ($Request.Method -eq "POST" -and $segments.Length -eq 4 -and $segments[3] -eq "collect") {
+            $payload = Read-JsonPayload $Request.BodyText
+            [void]$script:Repository.Authorize([string]$payload.token, "datasets", "write")
             Write-Json -Stream $Stream -Payload ($script:Repository.CollectDataset($datasetName))
             return
         }
 
         if ($Request.Method -eq "POST" -and $segments.Length -eq 3) {
-            $payload = if ($Request.BodyText) { ConvertFrom-Json $Request.BodyText } else { [ordered]@{} }
-            Write-Json -Stream $Stream -Payload ($script:Repository.SaveDatasetRow($datasetName, $payload))
+            $payload = Read-JsonPayload $Request.BodyText
+            [void]$script:Repository.Authorize([string]$payload.token, "datasets", "write")
+            $result = $script:Repository.SaveDatasetRow($datasetName, $payload)
+            $script:Repository.Audit([string]$payload.token, "save", "dataset:$datasetName", [string]$payload.id, "Saved dataset record")
+            Write-Json -Stream $Stream -Payload $result
             return
         }
 
         if ($Request.Method -eq "DELETE" -and $segments.Length -eq 4) {
-            Write-Json -Stream $Stream -Payload ($script:Repository.DeleteDatasetRow($datasetName, [int]$segments[3]))
+            [void]$script:Repository.Authorize([string]$Request.Query['token'], "datasets", "write")
+            $result = $script:Repository.DeleteDatasetRow($datasetName, [int]$segments[3])
+            $script:Repository.Audit([string]$Request.Query['token'], "delete", "dataset:$datasetName", $segments[3], "Deleted dataset record")
+            Write-Json -Stream $Stream -Payload $result
             return
         }
     }

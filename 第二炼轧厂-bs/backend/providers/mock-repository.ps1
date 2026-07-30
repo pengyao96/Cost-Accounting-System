@@ -367,138 +367,6 @@ function Mock-RunCost {
     }
 }
 
-function Mock-RunStandardCost {
-    param(
-        [Parameter(Mandatory = $true)]$Repository,
-        [Parameter(Mandatory = $true)]$Request
-    )
-
-    $line = if ($Request.line) { [string]$Request.line } else { "rz" }
-    $conditions = @($Repository.State.datasets.standardConditions | Where-Object { $_.line -eq $line })
-    $totalThreshold = [double](($conditions | Where-Object { $_.conditionType -eq "total_output" } | Select-Object -First 1).value)
-    $singleThreshold = [double](($conditions | Where-Object { $_.conditionType -eq "min_grade_output" } | Select-Object -First 1).value)
-
-    $historyRows = @($Repository.State.standardHistory | Where-Object { $_.line -eq $line })
-    $periodTotals = @{}
-    foreach ($row in $historyRows) {
-        if (-not $periodTotals.ContainsKey($row.period)) {
-            $periodTotals[$row.period] = 0.0
-        }
-        $periodTotals[$row.period] += [double]$row.coilWt
-    }
-
-    $filtered = @($historyRows | Where-Object {
-        [double]$_.coilWt -ge $singleThreshold -and $periodTotals[$_.period] -ge $totalThreshold
-    })
-
-    $averageRows = @()
-    $standardRows = @()
-    foreach ($group in ($filtered | Group-Object grade)) {
-        $rows = @($group.Group)
-        $slabWt = 0.0
-        $coilWt = 0.0
-        foreach ($row in $rows) {
-            $slabWt += [double]$row.slabWt
-            $coilWt += [double]$row.coilWt
-        }
-
-        $averageRows += ,([ordered]@{
-            grade = $rows[0].grade
-            pinzhong = $rows[0].pinzhong
-            xilie = $rows[0].xilie
-            sampleCount = $rows.Count
-            sourcePeriods = ($rows.period | Sort-Object -Unique) -join ", "
-            coilWt = [math]::Round($coilWt, 2)
-            yieldRate = if ($slabWt -eq 0) { 0 } else { [math]::Round(($coilWt / $slabWt), 4) }
-            processCost = Mock-WeightedAverage -Rows $rows -Field "processCost" -WeightField "coilWt"
-            manufacturingCost = Mock-WeightedAverage -Rows $rows -Field "manufacturingCost" -WeightField "coilWt"
-            sampleCost = Mock-WeightedAverage -Rows $rows -Field "sampleCost" -WeightField "coilWt"
-            packageCost = Mock-WeightedAverage -Rows $rows -Field "packageCost" -WeightField "coilWt"
-        })
-
-        $best = $rows | Sort-Object manufacturingCost | Select-Object -First 1
-        $standardRows += ,([ordered]@{
-            grade = $best.grade
-            pinzhong = $best.pinzhong
-            xilie = $best.xilie
-            selectedPeriod = $best.period
-            coilWt = $best.coilWt
-            yieldRate = $best.yieldRate
-            processCost = $best.processCost
-            manufacturingCost = $best.manufacturingCost
-            sampleCost = $best.sampleCost
-            packageCost = $best.packageCost
-            recycleCredit = $best.recycleCredit
-        })
-    }
-
-    return [ordered]@{
-        line = $line
-        totalThreshold = $totalThreshold
-        singleThreshold = $singleThreshold
-        selectedPeriods = @($filtered.period | Sort-Object -Unique)
-        averageRows = $averageRows
-        standardRows = $standardRows
-    }
-}
-
-function Mock-RunSchedule {
-    param(
-        [Parameter(Mandatory = $true)]$Repository,
-        [Parameter(Mandatory = $true)]$Request
-    )
-
-    $line = if ($Request.line) { [string]$Request.line } else { "lj" }
-    $startDate = if ($Request.startDate) { [datetime]$Request.startDate } else { [datetime]"2026-07-15 08:00:00" }
-    $paramsDataset = if ($line -eq "lj") { "ljScheduleParams" } else { "rzScheduleParams" }
-    $planKey = if ($line -eq "lj") { "lj" } else { "rz" }
-
-    $params = @{}
-    foreach ($row in $Repository.State.datasets[$paramsDataset]) {
-        $params[$row.stepCode] = [double]$row.minutes
-    }
-
-    $plans = @($Repository.State.schedulePlans[$planKey])
-    $cursor = $startDate
-    $rows = @()
-    foreach ($plan in $plans) {
-        $funcStart = $cursor
-        $funcEnd = $funcStart.AddMinutes($params.furnace)
-        $millStart = $funcEnd.AddMinutes($params.gapFuncMill)
-        $millEnd = $millStart.AddMinutes($params.rolling)
-        $coldStart = $millEnd.AddMinutes($params.gapMillCold)
-        $coldEnd = $coldStart.AddMinutes($params.cold)
-        $finishStart = $coldEnd
-        $finishEnd = $finishStart.AddMinutes($params.finish)
-
-        $rows += ,([ordered]@{
-            slabNo = $plan.slabNo
-            grade = $plan.grade
-            thickness = $plan.thickness
-            width = $plan.width
-            funcStart = $funcStart.ToString("yyyy-MM-dd HH:mm")
-            funcEnd = $funcEnd.ToString("yyyy-MM-dd HH:mm")
-            millStart = $millStart.ToString("yyyy-MM-dd HH:mm")
-            millEnd = $millEnd.ToString("yyyy-MM-dd HH:mm")
-            coldEnd = $coldEnd.ToString("yyyy-MM-dd HH:mm")
-            finishEnd = $finishEnd.ToString("yyyy-MM-dd HH:mm")
-        })
-
-        $cursor = $cursor.AddMinutes($params.chargeGap)
-    }
-
-    $bottleneck = $Repository.State.datasets[$paramsDataset] | Sort-Object minutes -Descending | Select-Object -First 1
-    return [ordered]@{
-        line = $line
-        startDate = $startDate.ToString("yyyy-MM-dd HH:mm")
-        notes = @(
-            "Current schedule output is mock data and mirrors the sequence simulation in the original desktop module.",
-            "Current bottleneck step: $($bottleneck.stepName) ($($bottleneck.minutes) min)"
-        )
-        rows = $rows
-    }
-}
-
 function Mock-PublicUser {
     param([Parameter(Mandatory = $true)]$User)
     $displayName = if ($User.name) {
@@ -535,7 +403,7 @@ function Mock-EnsureAdminUser {
     $rows = @(Mock-GetSystemUsers -Repository $Repository)
     $admin = @($rows | Where-Object { $_.account -eq "admin" }) | Select-Object -First 1
     if (-not $admin) {
-        $nextId = if ($rows.Count -gt 0) { Mock-NextId -Rows $rows } else { 1 }
+        $nextId = Mock-NextId -Rows $rows
         $rows += ,[ordered]@{ id = $nextId; account = "admin"; password = "123456"; group = "系统管理员" }
         $Repository.State.systemUsers = $rows
     }
@@ -633,16 +501,6 @@ function New-MockRepository {
         return [ordered]@{ rows = @() }
     }
 
-    $repository | Add-Member -MemberType ScriptMethod -Name RunStandardCost -Value {
-        param($Request)
-        return Mock-RunStandardCost -Repository $this -Request $Request
-    }
-
-    $repository | Add-Member -MemberType ScriptMethod -Name RunSchedule -Value {
-        param($Request)
-        return Mock-RunSchedule -Repository $this -Request $Request
-    }
-
     $repository | Add-Member -MemberType ScriptMethod -Name Login -Value {
         param($Payload)
         $account = [string]$Payload.account
@@ -712,6 +570,18 @@ function New-MockRepository {
 
     $repository | Add-Member -MemberType ScriptMethod -Name GetUserGroups -Value {
         return [ordered]@{ rows = @($this.State.userGroups | ForEach-Object { @{ group = $_ } }) }
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name Authorize -Value {
+        param([string]$Token, [string]$Module, [string]$Action)
+        $user = Mock-GetSessionUser -Repository $this -Token $Token
+        if ($Action -ne "read" -and $user.group -ne "系统管理员") { throw "当前用户没有 $Action 权限" }
+        return $user
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name Audit -Value {
+        param([string]$Token, [string]$Action, [string]$EntityType, [string]$EntityId, [string]$Detail)
+        # Mock mode keeps no audit trail because its state file is only a local development fallback.
     }
 
     return $repository

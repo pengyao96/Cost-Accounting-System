@@ -120,6 +120,21 @@ function Get-SqlSessionUser {
     return $user
 }
 
+function Assert-SqlPermission {
+    param($Repository, [string]$Token, [string]$Module, [string]$Action)
+    $user = Get-SqlSessionUser $Repository $Token
+    if ($user.group -eq "系统管理员") { return $user }
+    $column = switch ($Action) { "read" { "can_read" } "write" { "can_write" } "calculate" { "can_calculate" } "approve" { "can_approve" } default { throw "Unsupported permission action: $Action" } }
+    $allowed = Invoke-SqlScalar $Repository.SqlConnectionString "SELECT p.$column FROM dbo.sys_permissions p INNER JOIN dbo.sys_user_groups g ON g.id=p.group_id WHERE g.group_name=@group AND p.module_code=@module" @{ "@group" = $user.group; "@module" = $Module }
+    if ($null -eq $allowed -or -not [bool]$allowed) { throw "当前用户没有 $Action 权限" }
+    return $user
+}
+
+function Write-SqlAudit {
+    param([string]$ConnectionString, $User, [string]$Action, [string]$EntityType, [string]$EntityId, [string]$Detail)
+    Invoke-SqlNonQuery $ConnectionString "INSERT dbo.sys_audit_logs(user_id, action, entity_type, entity_id, detail) VALUES(@userId, @action, @entityType, @entityId, @detail)" @{ "@userId" = [int]$User.id; "@action" = $Action; "@entityType" = $EntityType; "@entityId" = $EntityId; "@detail" = $Detail }
+}
+
 function Get-SqlHeatTreatmentDataset {
     param([string]$ConnectionString)
     $rows = Invoke-SqlRows $ConnectionString "SELECT id, rclyq, rclms FROM dbo.yclyq ORDER BY id"
@@ -256,6 +271,111 @@ function Get-SqlAdditionalBasicDataset {
 function ConvertTo-SqlPublicUser {
     param($Row)
     return [ordered]@{ id = [int]$Row.id; account = [string]$Row.account; name = [string]$Row.name; phone = [string]$Row.phone; displayName = if ($Row.name) { [string]$Row.name } else { [string]$Row.account }; password = [string]$Row.password_plain; group = [string]$Row.group }
+}
+
+function Get-SqlCostPeriodId {
+    param([string]$ConnectionString, [datetime]$StartDate, [datetime]$EndDate)
+
+    $periodRows = Invoke-SqlRows $ConnectionString "SELECT id, status FROM dbo.accounting_periods WHERE start_date=@startDate AND end_date=@endDate" @{ "@startDate" = $StartDate.Date; "@endDate" = $EndDate.Date }
+    if ($periodRows.Count -gt 0) {
+        if ($periodRows[0].status -eq "closed") { throw "当前核算期间已结账，不能重复计算" }
+        return [int]$periodRows[0].id
+    }
+    $periodName = "$($StartDate.ToString('yyyy-MM-dd')) 至 $($EndDate.ToString('yyyy-MM-dd'))"
+    return [int](Invoke-SqlScalar $ConnectionString "INSERT dbo.accounting_periods(period_name, start_date, end_date) VALUES(@name, @startDate, @endDate); SELECT CAST(SCOPE_IDENTITY() AS int)" @{ "@name" = $periodName; "@startDate" = $StartDate.Date; "@endDate" = $EndDate.Date })
+}
+
+function Get-SqlLJCostSourceRows {
+    param([string]$ConnectionString, [datetime]$StartDate, [datetime]$EndDate)
+
+    $start = $StartDate.ToString("yyyyMMdd000000")
+    $end = $EndDate.AddDays(1).ToString("yyyyMMdd000000")
+    return Invoke-SqlRows $ConnectionString @"
+SELECT
+    ISNULL(NULLIF([钢种], N''), N'未分类') AS grade,
+    ISNULL(NULLIF([品种], N''), N'未分类') AS product,
+    ISNULL(NULLIF([系列], N''), N'未分类') AS series,
+    ISNULL(NULLIF([厚度索引], N''), N'未分类') AS thickness,
+    ISNULL(NULLIF([宽度索引], N''), N'未分类') AS width,
+    TRY_CONVERT(DECIMAL(18,4), [净重]) AS coil_weight,
+    TRY_CONVERT(DECIMAL(18,4), [钢板理论重量]) AS input_weight
+FROM dbo.tmmhp21
+WHERE [生产时间] >= @start AND [生产时间] < @end
+  AND TRY_CONVERT(DECIMAL(18,4), [净重]) IS NOT NULL
+"@ @{ "@start" = $start; "@end" = $end }
+}
+
+function Get-SqlLJCostInputs {
+    param([string]$ConnectionString, [datetime]$StartDate, [datetime]$EndDate)
+
+    $start = $StartDate.ToString("yyyyMMdd000000")
+    $end = $EndDate.AddDays(1).ToString("yyyyMMdd000000")
+    $consumption = Invoke-SqlScalar $ConnectionString "SELECT ISNULL(SUM([金额]), 0) FROM dbo.ljxiaohao WHERE [开始时间] < @end AND [结束时间] >= @start" @{ "@start" = $start; "@end" = $end }
+    $fallbackPrice = Invoke-SqlScalar $ConnectionString "SELECT ISNULL(AVG([计划价]), 0) FROM dbo.ljjihuajia" @{}
+    return @{ processAmount = [decimal]$consumption; fallbackPrice = [decimal]$fallbackPrice }
+}
+
+function Get-SqlLJPlanPrice {
+    param([string]$ConnectionString, [string]$Grade, [decimal]$FallbackPrice)
+    $price = Invoke-SqlScalar $ConnectionString "SELECT TOP 1 ISNULL([炼钢实际价格], [计划价]) FROM dbo.ljjihuajia WHERE [钢种]=@grade ORDER BY id DESC" @{ "@grade" = $Grade }
+    return if ($null -eq $price) { $FallbackPrice } else { [decimal]$price }
+}
+
+function Save-SqlCostCalculation {
+    param([string]$ConnectionString, [string]$Line, [string]$Dimension, [datetime]$StartDate, [datetime]$EndDate, $Rows, [int]$SourceRowCount, [decimal]$ProcessAmount)
+
+    $periodId = Get-SqlCostPeriodId $ConnectionString $StartDate $EndDate
+    $batchNo = "COST-$($Line.ToUpperInvariant())-$($StartDate.ToString('yyyyMMdd'))-$([guid]::NewGuid().ToString('N').Substring(0, 8).ToUpperInvariant())"
+    $totalWeight = [decimal](($Rows | Measure-Object -Property coilWt -Sum).Sum)
+    $batchId = [int](Invoke-SqlScalar $ConnectionString "INSERT dbo.cost_calculation_batches(batch_no, period_id, line_code, dimension_code, source_row_count, output_row_count, total_output_weight) VALUES(@batchNo, @periodId, @line, @dimension, @sourceCount, @outputCount, @weight); SELECT CAST(SCOPE_IDENTITY() AS int)" @{ "@batchNo" = $batchNo; "@periodId" = $periodId; "@line" = $Line; "@dimension" = $Dimension; "@sourceCount" = $SourceRowCount; "@outputCount" = $Rows.Count; "@weight" = $totalWeight })
+    $output = @()
+    foreach ($row in $Rows) {
+        $resultId = [int](Invoke-SqlScalar $ConnectionString "INSERT dbo.cost_calculation_results(batch_id, display_name, grade, product, series, thickness, width, coil_weight, input_weight, yield_rate, material_cost, process_cost, manufacturing_cost, sale_price, profit_per_ton) VALUES(@batchId, @name, @grade, @product, @series, @thickness, @width, @coilWeight, @inputWeight, @yieldRate, @materialCost, @processCost, @manufacturingCost, @salePrice, @profit); SELECT CAST(SCOPE_IDENTITY() AS int)" @{ "@batchId" = $batchId; "@name" = $row.name; "@grade" = $row.grade; "@product" = $row.pinzhong; "@series" = $row.xilie; "@thickness" = $row.thickness; "@width" = $row.width; "@coilWeight" = $row.coilWt; "@inputWeight" = $row.inputWt; "@yieldRate" = $row.yieldRate; "@materialCost" = $row.materialCost; "@processCost" = $row.processCost; "@manufacturingCost" = $row.manufacturingCost; "@salePrice" = $row.salePrice; "@profit" = $row.profitPerTon })
+        Invoke-SqlNonQuery $ConnectionString "INSERT dbo.cost_calculation_details(result_id, item_name, amount, note) VALUES(@resultId, N'板坯原料成本', @material, N'板坯计划价按钢种匹配'), (@resultId, N'财务转账消耗分摊', @process, N'按本批次成品重量比例分摊'), (@resultId, N'制造成本', @total, N'原料成本与财务转账消耗之和')" @{ "@resultId" = $resultId; "@material" = $row.materialCost; "@process" = $row.processCost; "@total" = $row.manufacturingCost }
+        $row.id = $resultId
+        $row.detailKey = "sql-cost-$resultId"
+        $output += ,$row
+    }
+    return [ordered]@{ batchId = $batchId; batchNo = $batchNo; periodId = $periodId; processAmount = $ProcessAmount; rows = $output }
+}
+
+function Run-SqlLJCost {
+    param([string]$ConnectionString, $Request)
+
+    $startDate = [datetime]::Parse([string]$Request.startDate)
+    $endDate = [datetime]::Parse([string]$Request.endDate)
+    if ($endDate.Date -lt $startDate.Date) { throw "截至日期不能早于开始日期" }
+    $dimension = if ($Request.dimension) { [string]$Request.dimension } else { "bySpec" }
+    $sourceRows = @(Get-SqlLJCostSourceRows $ConnectionString $startDate $endDate)
+    if ($sourceRows.Count -eq 0) { return [ordered]@{ line = "lj"; dimension = $dimension; batchId = $null; rows = @(); message = "所选期间没有可核算的炉卷生产实绩" } }
+
+    $inputs = Get-SqlLJCostInputs $ConnectionString $startDate $endDate
+    $groups = @{}
+    foreach ($source in $sourceRows) {
+        $key = switch ($dimension) {
+            "byGrade" { $source.grade }
+            "bySeries" { $source.series }
+            "byPinzhong" { $source.product }
+            "bySpec" { "$($source.grade)|$($source.product)|$($source.series)|$($source.thickness)|$($source.width)" }
+            default { throw "Unsupported cost dimension: $dimension" }
+        }
+        if (-not $groups.ContainsKey($key)) { $groups[$key] = @{ grade = $source.grade; pinzhong = $source.product; xilie = $source.series; thickness = $source.thickness; width = $source.width; coilWt = [decimal]0; inputWt = [decimal]0 } }
+        $groups[$key].coilWt += [decimal]$source.coil_weight
+        $groups[$key].inputWt += if ($null -eq $source.input_weight) { [decimal]$source.coil_weight } else { [decimal]$source.input_weight }
+    }
+    $totalWeight = [decimal](($groups.Values | Measure-Object -Property coilWt -Sum).Sum)
+    $rows = @()
+    foreach ($group in $groups.Values) {
+        $price = Get-SqlLJPlanPrice $ConnectionString $group.grade $inputs.fallbackPrice
+        $yieldRate = if ($group.inputWt -eq 0) { 0 } else { [math]::Round(($group.coilWt / $group.inputWt) * 100, 4) }
+        $materialCost = [math]::Round([double]$price / [math]::Max([double]($yieldRate / 100), 0.0001), 4)
+        $processCost = if ($totalWeight -eq 0) { 0 } else { [math]::Round([double]($inputs.processAmount / $totalWeight), 4) }
+        $manufacturingCost = [math]::Round($materialCost + $processCost, 4)
+        $name = if ($dimension -eq "bySpec") { "$($group.grade) / $($group.thickness) / $($group.width)" } elseif ($dimension -eq "byGrade") { $group.grade } elseif ($dimension -eq "bySeries") { $group.xilie } else { $group.pinzhong }
+        $rows += ,[pscustomobject]@{ name = $name; grade = $group.grade; pinzhong = $group.pinzhong; xilie = $group.xilie; thickness = $group.thickness; width = $group.width; coilWt = [math]::Round([double]$group.coilWt, 4); inputWt = [math]::Round([double]$group.inputWt, 4); yieldRate = $yieldRate; materialCost = $materialCost; processCost = $processCost; manufacturingCost = $manufacturingCost; salePrice = 0; profitPerTon = -$manufacturingCost }
+    }
+    $saved = Save-SqlCostCalculation $ConnectionString "lj" $dimension $startDate $endDate $rows $sourceRows.Count $inputs.processAmount
+    return [ordered]@{ line = "lj"; dimension = $dimension; batchId = $saved.batchId; batchNo = $saved.batchNo; rows = $saved.rows }
 }
 
 function Initialize-SqlSystemUsers {
@@ -481,6 +601,32 @@ function New-SqlRepository {
 
     $repository | Add-Member -MemberType ScriptMethod -Name GetUserGroups -Force -Value {
         $rows = Invoke-SqlRows $this.SqlConnectionString "SELECT group_name AS [group] FROM dbo.sys_user_groups WHERE is_enabled = 1 ORDER BY id"
+        return [ordered]@{ rows = $rows }
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name Authorize -Force -Value {
+        param([string]$Token, [string]$Module, [string]$Action)
+        return Assert-SqlPermission $this $Token $Module $Action
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name Audit -Force -Value {
+        param([string]$Token, [string]$Action, [string]$EntityType, [string]$EntityId, [string]$Detail)
+        $user = Get-SqlSessionUser $this $Token
+        Write-SqlAudit $this.SqlConnectionString $user $Action $EntityType $EntityId $Detail
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name RunCost -Force -Value {
+        param($Request)
+        $line = if ($Request.line) { [string]$Request.line } else { "lj" }
+        if ($line -ne "lj") { throw "当前 SQL 实际核算已接入炉卷（lj）；1780 与炼钢将在对应实绩口径确认后接入" }
+        return Run-SqlLJCost $this.SqlConnectionString $Request
+    }
+
+    $repository | Add-Member -MemberType ScriptMethod -Name GetCostDetail -Force -Value {
+        param([string]$DetailKey)
+        if ($DetailKey -notmatch '^sql-cost-(\d+)$') { return [ordered]@{ rows = @() } }
+        $resultId = [int]$Matches[1]
+        $rows = Invoke-SqlRows $this.SqlConnectionString "SELECT item_name AS item, amount, ISNULL(note, N'') AS note FROM dbo.cost_calculation_details WHERE result_id=@id ORDER BY id" @{ "@id" = $resultId }
         return [ordered]@{ rows = $rows }
     }
 

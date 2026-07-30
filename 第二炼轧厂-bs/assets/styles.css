@@ -122,6 +122,7 @@ button { cursor: pointer; }
 .dataset-layout .editor-form { min-height: 0; align-content: start; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
 .panel { min-width: 0; padding: 20px; }
 .panel-header { margin-bottom: 14px; }.panel-header h3 { color: #233847; font-size: 16px; }.panel-header p { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.table-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .table-reference { display: inline-block; margin-left: 8px; padding: 2px 6px; border: 1px solid #cbdbe2; background: #eef6f8; color: var(--brand); font-family: Consolas, "Microsoft YaHei", monospace; font-size: 11px; }
 .toolbar { align-items: center; margin-bottom: 12px; }
 .table-search { display: inline-flex; min-width: 185px; align-items: center; gap: 8px; margin-left: auto; }.table-search input { width: 150px; min-height: 32px; }

@@ -23,17 +23,12 @@
         { id: "samplePriceLj", title: "基础数据：试样加工费", kind: "dataset", dataset: "samplePriceLj" },
         { id: "ljActuals", title: "实绩：综合信息与轧制", kind: "dataset", dataset: "ljActuals" },
         { id: "otherConsumptions", title: "实绩：固定消耗", kind: "dataset", dataset: "otherConsumptions" },
-        { id: "ljScheduleParams", title: "时刻表：节拍参数", kind: "dataset", dataset: "ljScheduleParams" },
-        { id: "ljSchedule", title: "时刻表：排程模拟", kind: "schedule", line: "lj", paramsDataset: "ljScheduleParams" },
         { id: "steelmakingGrades", title: "基础数据：钢种与系列", kind: "dataset", dataset: "steelmakingGrades" },
         { id: "steelmakingRoutes", title: "基础数据：路径表", kind: "dataset", dataset: "steelmakingRoutes" },
         { id: "steelmakingPrices", title: "基础数据：计划价与水平附加", kind: "dataset", dataset: "steelmakingPrices" },
         { id: "steelmakingActuals", title: "实绩：转炉、精炼与连铸", kind: "dataset", dataset: "steelmakingActuals" },
         { id: "steelmakingFixedConsumption", title: "实绩：固定消耗", kind: "dataset", dataset: "steelmakingFixedConsumption" },
-        { id: "standardConditions", title: "标准成本条件", kind: "dataset", dataset: "standardConditions" },
-        { id: "standardCost", title: "标准成本结果", kind: "standardCost" },
-        { id: "rzScheduleParams", title: "热连轧节拍参数", kind: "dataset", dataset: "rzScheduleParams" },
-        { id: "rzSchedule", title: "1780 时刻表模拟", kind: "schedule", line: "rz", paramsDataset: "rzScheduleParams" }
+        { id: "standardConditions", title: "标准成本条件", kind: "dataset", dataset: "standardConditions" }
   ];
 
   var navTree = [
@@ -207,17 +202,6 @@
       loading: false
     },
     currentCostDetails: null,
-    standardCost: {
-      line: "rz",
-      startDate: "2026-04-01",
-      endDate: "2026-07-31",
-      loading: false,
-      result: null
-    },
-    schedules: {
-      lj: { startDate: "2026-07-15T08:00", loading: false, result: null },
-      rz: { startDate: "2026-07-15T08:00", loading: false, result: null }
-    },
     userManagement: { payload: null, draft: null, groups: [] },
     renderedPage: ""
   };
@@ -245,9 +229,6 @@
         navigateTo(state.currentPage);
       }
       runCost();
-      runStandardCost();
-      runSchedule("lj", false);
-      runSchedule("rz", false);
     });
   }
 
@@ -513,18 +494,14 @@
 
   function renderTopbar() {
     var page = pageMap[state.currentPage];
-    var system = state.bootstrap && state.bootstrap.system ? state.bootstrap.system : {};
     return [
       '<header class="topbar">',
       '<div class="page-heading"><div class="breadcrumb">第二炼轧厂 <span>/</span> ' + safe(page.title) + '</div>',
       "<h2>" + safe(page.title) + "</h2>",
-      "<p>" + safe(describePage(page)) + "</p>",
       "</div>",
       '<div class="status-panel">',
       '<span class="current-user">' + safe(state.session.user.account) + ' · ' + safe(state.session.user.group) + '</span>',
       '<button class="logout-btn" data-action="logout">退出登录</button>',
-      '<span class="pill">' + safe(system.currentProvider || "mock") + "</span>",
-      '<span class="pill subtle">' + safe(system.sourceEntry || "") + "</span>",
       "</div>",
       "</header>"
     ].join("");
@@ -545,12 +522,6 @@
     }
     if (page.kind === "costSummary") {
       return renderCostSummary();
-    }
-    if (page.kind === "standardCost") {
-      return renderStandardCost();
-    }
-    if (page.kind === "schedule") {
-      return renderSchedulePage(page);
     }
     if (page.kind === "userManagement") {
       return renderUserManagement();
@@ -663,7 +634,7 @@
     draft = state.drafts[page.dataset] || cloneRow(selectedRow || makeEmptyRow(columns));
 
     html.push('<div class="two-column dataset-layout">');
-    html.push('<section class="panel table-panel"><div class="panel-header"><h3>' + safe(meta.title || page.title) + "</h3><p>" + safe(meta.description || "") + (meta.tableName ? ' <span class="table-reference">数据库表：' + safe(meta.tableName) + '</span>' : '') + '</p></div>');
+    html.push('<section class="panel table-panel"><div class="panel-header table-heading"><h3>' + safe(meta.title || page.title) + '</h3>' + (meta.tableName ? '<span class="table-reference">数据库表：' + safe(meta.tableName) + '</span>' : '') + '</div>');
     html.push('<div class="toolbar"><button class="primary-btn" data-action="reload-dataset" data-dataset="' + safe(page.dataset) + '">刷新</button>');
     if (!meta.readonly) {
       html.push('<button class="secondary-btn" data-action="new-row" data-dataset="' + safe(page.dataset) + '">新建</button>');
@@ -688,7 +659,7 @@
     html.push(renderDatasetTableRows(page.dataset, visibleRows, columns, selectedId));
     html.push("</tbody></table></div></section>");
 
-    html.push('<section class="panel editor-panel"><div class="panel-header"><h3>' + (meta.readonly ? "记录详情" : "记录编辑") + "</h3><p>" + safe(meta.readonly ? "当前数据集只读，未来应由真实采集服务或数据库同步更新。" : "当前会通过 API 保存到 mock 仓储，未来可替换为 SQL 仓储。") + "</p></div>");
+    html.push('<section class="panel editor-panel"><div class="panel-header"><h3>' + (meta.readonly ? "记录详情" : "记录编辑") + "</h3></div>");
     if (selectedRow || !meta.readonly) {
       html.push(renderEditor(page.dataset, columns, draft, meta.readonly));
     } else {
@@ -728,7 +699,7 @@
     html.push(renderInputControl("startDate", "开始日期", state.costRun.startDate, "date", "cost"));
     html.push(renderInputControl("endDate", "结束日期", state.costRun.endDate, "date", "cost"));
     html.push('<button class="primary-btn" data-action="run-cost">' + (state.costRun.loading ? "计算中..." : "执行核算") + "</button></div>");
-    html.push('<div class="callout"><strong>当前说明</strong><span>成本结果来自 Mock Cost Engine，但接口边界已经按未来服务化方式拆开：`POST /api/cost/run` 与 `GET /api/cost/detail`。</span></div>');
+    html.push('<div class="callout"><strong>当前说明</strong><span>核算结果按所选期间生成独立计算批次；SQL Server 模式使用生产实绩、财务转账消耗与板坯计划价计算，并保留结果明细。</span></div>');
     html.push('<div class="table-wrap"><table><thead><tr><th>显示名称</th><th>钢种</th><th>品种</th><th>系列</th><th>厚度</th><th>宽度</th><th>卷重</th><th>成材率</th><th>制造成本</th><th>售价</th><th>吨钢利润</th></tr></thead><tbody>');
     each(rows, function (row) {
       html.push('<tr class="' + (selectedMeta && selectedMeta.id === row.id ? "selected" : "") + '" data-cost-row="' + safe(row.id) + '">');
@@ -746,67 +717,6 @@
       html.push('<div class="empty-detail"><strong>暂无明细</strong><p>请从成本总表中选择一条非“合计”记录。</p></div>');
     }
     html.push("</div></div></section>");
-    return html.join("");
-  }
-
-  function renderStandardCost() {
-    var result = state.standardCost.result;
-    var html = [];
-
-    html.push('<section class="panel"><div class="panel-header"><h3>标准成本与平均标准成本</h3><p>按产量门槛筛选，提炼炉卷或1780的平均标准成本与标准成本。</p></div>');
-    html.push('<div class="cost-runner">');
-    html.push(renderSelectControl("line", "子系统", state.standardCost.line, [{ value: "rz", label: "1780" }, { value: "lj", label: "炉卷" }], "standard"));
-    html.push(renderInputControl("startDate", "开始日期", state.standardCost.startDate, "date", "standard"));
-    html.push(renderInputControl("endDate", "结束日期", state.standardCost.endDate, "date", "standard"));
-    html.push('<button class="primary-btn" data-action="run-standard-cost">' + (state.standardCost.loading ? "生成中..." : "生成标准成本") + "</button></div>");
-
-    if (!result) {
-      html.push('<div class="empty-detail"><strong>尚未生成结果</strong><p>点击“生成标准成本”后，系统会调用 `/api/standard-cost/run` 返回两张结果表。</p></div></section>');
-      return html.join("");
-    }
-
-    html.push('<div class="callout"><strong>筛选条件</strong><span>总产量阈值 ' + safe(String(result.totalThreshold)) + '，单钢种最小产量 ' + safe(String(result.singleThreshold)) + '，入选期间 ' + safe((result.selectedPeriods || []).join(", ") || "无") + "。</span></div>");
-    html.push('<div class="two-column"><section class="panel"><div class="panel-header"><h3>平均标准成本</h3><p>按入选样本加权平均。</p></div><div class="table-wrap"><table><thead><tr><th>钢种</th><th>品种</th><th>系列</th><th>样本数</th><th>来源期间</th><th>成材率</th><th>工序成本</th><th>制造成本</th></tr></thead><tbody>');
-    each(result.averageRows || [], function (row) {
-      html.push("<tr><td>" + safe(row.grade) + "</td><td>" + safe(row.pinzhong) + "</td><td>" + safe(row.xilie) + "</td><td>" + safe(formatCell(row.sampleCount)) + "</td><td>" + safe(row.sourcePeriods) + "</td><td>" + safe(formatCell(row.yieldRate)) + "</td><td>" + safe(formatCell(row.processCost)) + "</td><td>" + safe(formatCell(row.manufacturingCost)) + "</td></tr>");
-    });
-    html.push('</tbody></table></div></section>');
-
-    html.push('<section class="panel"><div class="panel-header"><h3>标准成本</h3><p>按候选样本中制造成本最低值提炼。</p></div><div class="table-wrap"><table><thead><tr><th>钢种</th><th>入选期间</th><th>成材率</th><th>工序成本</th><th>制造成本</th><th>试样费</th></tr></thead><tbody>');
-    each(result.standardRows || [], function (row) {
-      html.push("<tr><td>" + safe(row.grade) + "</td><td>" + safe(row.selectedPeriod) + "</td><td>" + safe(formatCell(row.yieldRate)) + "</td><td>" + safe(formatCell(row.processCost)) + "</td><td>" + safe(formatCell(row.manufacturingCost)) + "</td><td>" + safe(formatCell(row.sampleCost)) + "</td></tr>");
-    });
-    html.push("</tbody></table></div></section></div></section>");
-    return html.join("");
-  }
-
-  function renderSchedulePage(page) {
-    var scheduleState = state.schedules[page.line];
-    var result = scheduleState.result;
-    var paramsPayload = state.datasets[page.paramsDataset];
-    var paramsRows = paramsPayload && paramsPayload.rows ? paramsPayload.rows : [];
-    var html = [];
-
-    html.push('<div class="two-column"><section class="panel"><div class="panel-header"><h3>' + safe(page.title) + "</h3><p>映射 " + safe(page.line === "lj" ? "JSLJSKB" : "RZSKB") + " 的节拍参数和顺序推演逻辑，当前用伪数据模拟时刻表生成结果。</p></div>");
-    html.push('<div class="cost-runner">' + renderInputControl("startDate", "开始时刻", scheduleState.startDate, "datetime-local", "schedule-" + page.line) + '<button class="primary-btn" data-action="run-schedule" data-line="' + safe(page.line) + '">' + (scheduleState.loading ? "生成中..." : "生成排程") + "</button></div>");
-
-    if (result) {
-      html.push('<div class="callout"><strong>结果说明</strong><span>' + safe((result.notes || []).join(" ")) + '</span></div>');
-      html.push('<div class="table-wrap"><table><thead><tr><th>板坯号</th><th>钢种</th><th>厚度</th><th>宽度</th><th>装炉开始</th><th>出炉结束</th><th>开轧</th><th>终轧</th><th>冷却完成</th><th>精整完成</th></tr></thead><tbody>');
-      each(result.rows || [], function (row) {
-        html.push("<tr><td>" + safe(row.slabNo) + "</td><td>" + safe(row.grade) + "</td><td>" + safe(formatCell(row.thickness)) + "</td><td>" + safe(formatCell(row.width)) + "</td><td>" + safe(row.funcStart) + "</td><td>" + safe(row.funcEnd) + "</td><td>" + safe(row.millStart) + "</td><td>" + safe(row.millEnd) + "</td><td>" + safe(row.coldEnd) + "</td><td>" + safe(row.finishEnd) + "</td></tr>");
-      });
-      html.push("</tbody></table></div>");
-    } else {
-      html.push('<div class="empty-detail"><strong>尚未生成排程</strong><p>点击“生成排程”后会调用 `/api/schedules/run` 返回推演后的时刻表。</p></div>');
-    }
-    html.push("</section>");
-
-    html.push('<section class="panel"><div class="panel-header"><h3>当前节拍参数</h3><p>这些参数来自 `' + safe(page.paramsDataset) + '` 数据集，后续可直接替换成真实数据库配置表。</p></div><div class="detail-list">');
-    each(paramsRows, function (row) {
-      html.push('<div class="detail-item"><div><strong>' + safe(row.stepName) + "</strong><p>" + safe(row.note) + "</p></div><span>" + safe(formatCell(row.minutes)) + " 分钟</span></div>");
-    });
-    html.push("</div></section></div>");
     return html.join("");
   }
 
@@ -1059,24 +969,6 @@
       runCost();
     });
 
-    bindInputs("[data-scope='standard']", function (input) {
-      state.standardCost[input.getAttribute("data-field")] = input.value;
-    });
-
-    bindClick("[data-action='run-standard-cost']", function () {
-      runStandardCost();
-    });
-
-    bindInputs("[data-scope^='schedule-']", function (input) {
-      var scope = input.getAttribute("data-scope");
-      var line = scope.replace("schedule-", "");
-      state.schedules[line][input.getAttribute("data-field")] = input.value;
-    });
-
-    bindClick("[data-action='run-schedule']", function (button) {
-      runSchedule(button.getAttribute("data-line"), true);
-    });
-
     bindClick("[data-group-member]", function (button) {
       state.userManagement.groupSelectedUser = findRowById((state.userManagement.payload || {}).rows || [], button.getAttribute('data-group-member'));
       render();
@@ -1198,52 +1090,6 @@
     });
   }
 
-  function runStandardCost() {
-    state.standardCost.loading = true;
-    render();
-    apiPost("/standard-cost/run", state.standardCost, function (error, result) {
-      state.standardCost.loading = false;
-      if (error) {
-        showError(error);
-        return;
-      }
-      state.standardCost.result = result;
-      render();
-    });
-  }
-
-  function runSchedule(line, renderAfter) {
-    var paramsName = line === "lj" ? "ljScheduleParams" : "rzScheduleParams";
-    if (renderAfter !== false) {
-      renderAfter = true;
-    }
-
-    state.schedules[line].loading = true;
-    if (renderAfter) {
-      render();
-    }
-
-    ensureDataset(paramsName, function (datasetError) {
-      if (datasetError) {
-        state.schedules[line].loading = false;
-        showError(datasetError);
-        return;
-      }
-
-      apiPost("/schedules/run", { line: line, startDate: state.schedules[line].startDate }, function (error, result) {
-        state.schedules[line].loading = false;
-        if (error) {
-          showError(error);
-          return;
-        }
-        state.schedules[line].result = result;
-        if (renderAfter) {
-          render();
-        }
-      });
-    });
-  }
-
   function renderSelectControl(field, label, value, options, scope) {
     var html = [];
     html.push("<label><span>" + safe(label) + '</span><select data-scope="' + safe(scope) + '" data-field="' + safe(field) + '">');
@@ -1256,22 +1102,6 @@
 
   function renderInputControl(field, label, value, type, scope) {
     return '<label><span>' + safe(label) + '</span><input data-scope="' + safe(scope) + '" data-field="' + safe(field) + '" type="' + safe(type) + '" value="' + safeInputValue(value) + '"></label>';
-  }
-
-  function describePage(page) {
-    if (page.kind === "dashboard") {
-      return "以 第二炼轧厂\\ZXCBXT 为分析入口重组后的 B/S 模块总览";
-    }
-    if (page.kind === "costSummary") {
-      return "面向未来服务化的成本核算总表与明细联动";
-    }
-    if (page.kind === "standardCost") {
-      return "标准成本与平均标准成本的筛选与提炼";
-    }
-    if (page.kind === "schedule") {
-      return "工艺时刻表与节拍推演";
-    }
-    return "数据先经 API，再进入仓储层，未来可切换到真实数据库";
   }
 
   function countValues(keys, datasetsMeta) {
@@ -1573,6 +1403,15 @@
   }
 
   function apiRequest(method, path, payload, callback) {
+    var requiresSession = path.indexOf("/health") < 0 && path.indexOf("/bootstrap") < 0 && path.indexOf("/auth/login") < 0;
+    var token = state.session && state.session.token;
+    if (requiresSession && token) {
+      if (method === "GET" || method === "DELETE") {
+        path += (path.indexOf("?") >= 0 ? "&" : "?") + "token=" + encodeURIComponent(token);
+      } else if (payload && !payload.token) {
+        payload.token = token;
+      }
+    }
     var xhr = new XMLHttpRequest();
     xhr.open(method, API_BASE + path, true);
     xhr.setRequestHeader("Content-Type", "application/json");
