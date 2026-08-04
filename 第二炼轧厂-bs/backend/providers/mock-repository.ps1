@@ -517,7 +517,12 @@ function New-MockRepository {
         param([string]$Token)
         $current = Mock-GetSessionUser -Repository $this -Token $Token
         $users = if ($current.group -eq "系统管理员") { @(Mock-GetSystemUsers -Repository $this) } else { @($current) }
-        return [ordered]@{ currentUser = Mock-PublicUser $current; isAdmin = ($current.group -eq "系统管理员"); rows = @($users | ForEach-Object { Mock-PublicUser $_ }) }
+        return [ordered]@{
+            currentUser = Mock-PublicUser $current
+            isAdmin = ($current.group -eq "系统管理员")
+            rows = @($users | ForEach-Object { Mock-PublicUser $_ })
+            meta = [ordered]@{ title = "用户管理"; tableName = "sys_users" }
+        }
     }
 
     $repository | Add-Member -MemberType ScriptMethod -Name SaveUser -Value {
@@ -569,7 +574,14 @@ function New-MockRepository {
     }
 
     $repository | Add-Member -MemberType ScriptMethod -Name GetUserGroups -Value {
-        return [ordered]@{ rows = @($this.State.userGroups | ForEach-Object { @{ group = $_ } }) }
+        $users = @(Mock-GetSystemUsers -Repository $this)
+        $id = 0
+        $rows = @($this.State.userGroups | ForEach-Object {
+            $id += 1
+            $groupName = $_
+            [ordered]@{ id = $id; group = $groupName; is_enabled = $true; member_count = @($users | Where-Object { $_.group -eq $groupName }).Count; created_at = ""; updated_at = "" }
+        })
+        return [ordered]@{ rows = $rows; meta = [ordered]@{ title = "用户组管理"; tableName = "sys_user_groups" } }
     }
 
     $repository | Add-Member -MemberType ScriptMethod -Name Authorize -Value {

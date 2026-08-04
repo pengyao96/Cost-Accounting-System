@@ -545,7 +545,12 @@ function New-SqlRepository {
         if (-not $current) { throw "当前登录账户不存在" }
         $isAdmin = $current.group -eq "系统管理员"
         $rows = if ($isAdmin) { Get-SqlUserRows $this.SqlConnectionString } else { @($current) }
-        return [ordered]@{ currentUser = ConvertTo-SqlPublicUser $current; isAdmin = $isAdmin; rows = @($rows | ForEach-Object { ConvertTo-SqlPublicUser $_ }) }
+        return [ordered]@{
+            currentUser = ConvertTo-SqlPublicUser $current
+            isAdmin = $isAdmin
+            rows = @($rows | ForEach-Object { ConvertTo-SqlPublicUser $_ })
+            meta = [ordered]@{ title = "用户管理"; tableName = "sys_users" }
+        }
     }
 
     $repository | Add-Member -MemberType ScriptMethod -Name SaveUser -Force -Value {
@@ -600,8 +605,19 @@ function New-SqlRepository {
     }
 
     $repository | Add-Member -MemberType ScriptMethod -Name GetUserGroups -Force -Value {
-        $rows = Invoke-SqlRows $this.SqlConnectionString "SELECT group_name AS [group] FROM dbo.sys_user_groups WHERE is_enabled = 1 ORDER BY id"
-        return [ordered]@{ rows = $rows }
+        $rows = Invoke-SqlRows $this.SqlConnectionString @"
+SELECT g.id,
+       g.group_name AS [group],
+       g.is_enabled,
+       COUNT(u.id) AS member_count,
+       g.created_at,
+       g.updated_at
+FROM dbo.sys_user_groups g
+LEFT JOIN dbo.sys_users u ON u.group_id = g.id AND u.is_enabled = 1
+GROUP BY g.id, g.group_name, g.is_enabled, g.created_at, g.updated_at
+ORDER BY g.id
+"@
+        return [ordered]@{ rows = $rows; meta = [ordered]@{ title = "用户组管理"; tableName = "sys_user_groups" } }
     }
 
     $repository | Add-Member -MemberType ScriptMethod -Name Authorize -Force -Value {

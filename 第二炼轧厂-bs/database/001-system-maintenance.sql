@@ -3,13 +3,11 @@ GO
 
 IF DB_ID(N'SecondRollingCost') IS NULL
 BEGIN
-    DECLARE @dataFile NVARCHAR(4000) = N'D:\Code\Cost-Accounting-System\第二炼轧厂-bs\database\data\SecondRollingCost.mdf';
-    DECLARE @logFile NVARCHAR(4000) = N'D:\Code\Cost-Accounting-System\第二炼轧厂-bs\database\data\SecondRollingCost_log.ldf';
-    DECLARE @createSql NVARCHAR(MAX) =
-        N'CREATE DATABASE [SecondRollingCost] ON PRIMARY '
-        + N'(NAME = N''SecondRollingCost'', FILENAME = N''' + REPLACE(@dataFile, '''', '''''') + N''', SIZE = 64MB, FILEGROWTH = 32MB) '
-        + N'LOG ON (NAME = N''SecondRollingCost_log'', FILENAME = N''' + REPLACE(@logFile, '''', '''''') + N''', SIZE = 32MB, FILEGROWTH = 16MB);';
-    EXEC (@createSql);
+    CREATE DATABASE [SecondRollingCost];
+    ALTER DATABASE [SecondRollingCost]
+        MODIFY FILE (NAME = N'SecondRollingCost', SIZE = 64MB, FILEGROWTH = 32MB);
+    ALTER DATABASE [SecondRollingCost]
+        MODIFY FILE (NAME = N'SecondRollingCost_log', SIZE = 32MB, FILEGROWTH = 16MB);
 END
 GO
 

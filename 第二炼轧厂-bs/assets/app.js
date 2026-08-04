@@ -202,16 +202,35 @@
       loading: false
     },
     currentCostDetails: null,
-    userManagement: { payload: null, draft: null, groups: [] },
+    userManagement: { payload: null, draft: null, groups: [], groupPayload: null },
     renderedPage: ""
   };
 
   if (state.session) {
-    initialize();
+    validateStoredSession();
   } else if (DEBUG_AUTO_LOGIN) {
     loginWithCredentials("admin", "123456");
   } else {
     render();
+  }
+
+  function validateStoredSession() {
+    apiPost('/auth/users', { token: state.session.token }, function (error, payload) {
+      if (!error) {
+        state.userManagement.payload = payload;
+        initialize();
+        return;
+      }
+
+      state.session = null;
+      clearStoredSession();
+      if (DEBUG_AUTO_LOGIN) {
+        loginWithCredentials("admin", "123456");
+      } else {
+        state.loading = false;
+        render();
+      }
+    });
   }
 
   function initialize() {
@@ -722,12 +741,13 @@
 
   function renderUserManagement() {
     var payload = state.userManagement.payload;
+    var meta = payload && payload.meta ? payload.meta : {};
     var isAdmin = payload && payload.isAdmin;
     var rows = payload ? payload.rows || [] : [];
     var draft = state.userManagement.draft || (rows[0] ? cloneRow(rows[0]) : { account: "", password: "", group: "" });
     var groups = state.userManagement.groups || [];
     var html = [];
-    html.push('<div class="two-column user-management"><section class="panel table-panel"><div class="panel-header"><h3>账户信息</h3><p>' + (isAdmin ? '系统管理员可维护全部账户、密码与组归属。' : '当前账户仅可查看本人信息并修改自己的密码。') + ' 当前共 ' + safe(String(rows.length)) + ' 个账户。</p></div>');
+    html.push('<div class="two-column user-management"><section class="panel table-panel"><div class="panel-header table-heading"><div><h3>账户信息</h3><p>' + (isAdmin ? '系统管理员可维护全部账户、密码与组归属。' : '当前账户仅可查看本人信息并修改自己的密码。') + ' 当前共 ' + safe(String(rows.length)) + ' 个账户。</p></div>' + (meta.tableName ? '<span class="table-reference">数据库表：' + safe(meta.tableName) + '</span>' : '') + '</div>');
     if (isAdmin) { html.push('<div class="toolbar"><button class="primary-btn" data-action="new-user">新增用户</button></div>'); }
     html.push('<div class="table-wrap"><table><thead><tr><th>姓名</th><th>组归属</th><th>账户</th><th>当前密码</th><th>电话</th></tr></thead><tbody>');
     each(rows, function (row) { html.push('<tr class="' + (String(draft.id) === String(row.id) ? 'selected' : '') + '" data-user-row="' + safe(row.id) + '"><td>' + safe(row.name || '') + '</td><td>' + safe(row.group) + '</td><td>' + safe(row.account) + '</td><td class="password-cell">' + safe(row.password) + '</td><td>' + safe(row.phone || '') + '</td></tr>'); });
@@ -746,31 +766,26 @@
   }
 
   function renderUserGroups() {
-    var groups = (state.userManagement.groups || []).slice();
+    var groupPayload = state.userManagement.groupPayload || {};
+    var groupRows = groupPayload.rows || [];
+    var meta = groupPayload.meta || {};
     var users = (state.userManagement.payload || {}).rows || [];
-    var selected = state.userManagement.groupSelectedUser;
-    var assignedCount = 0;
-    each(users, function (user) {
-      var groupName = user.group || "未分配用户组";
-      if (groups.indexOf(groupName) < 0) { groups.push(groupName); }
+    var selectedGroup = state.userManagement.groupSelectedName || (groupRows[0] ? groupRows[0].group : "");
+    var members = users.filter(function (user) { return user.group === selectedGroup; });
+    var html = ['<div class="two-column"><section class="panel table-panel"><div class="panel-header table-heading"><div><h3>用户组管理</h3><p>当前共 ' + safe(String(groupRows.length)) + ' 个用户组、' + safe(String(users.length)) + ' 个有效账户。</p></div>' + (meta.tableName ? '<span class="table-reference">数据库表：' + safe(meta.tableName) + '</span>' : '') + '</div>'];
+    html.push('<div class="table-wrap"><table><thead><tr><th>ID</th><th>用户组名称</th><th>启用状态</th><th>成员数</th><th>创建时间</th><th>更新时间</th></tr></thead><tbody>');
+    each(groupRows, function (groupRow) {
+      html.push('<tr class="' + (groupRow.group === selectedGroup ? 'selected' : '') + '" data-group-row="' + safe(groupRow.group) + '"><td>' + safe(formatCell(groupRow.id)) + '</td><td>' + safe(groupRow.group) + '</td><td>' + (groupRow.is_enabled ? '启用' : '停用') + '</td><td>' + safe(formatCell(groupRow.member_count)) + '</td><td>' + safe(formatCell(groupRow.created_at)) + '</td><td>' + safe(formatCell(groupRow.updated_at)) + '</td></tr>');
     });
-    var html = ['<div class="two-column"><section class="panel"><div class="panel-header"><h3>用户组管理</h3><p>用户管理共 ' + safe(String(users.length)) + ' 个账户；以下用户组已配备 ' + safe(String(users.length)) + ' 名成员。点击姓名查看账户和附属信息。</p></div><div class="group-grid">'];
-    each(groups, function (group) {
-      var members = users.filter(function (user) { return (user.group || "未分配用户组") === group; });
-      assignedCount += members.length;
-      html.push('<div class="group-item"><strong>' + safe(group) + '</strong><span>' + safe(String(members.length)) + ' 名成员</span><div class="group-members">');
-      if (members.length) {
-        each(members, function (user) { html.push('<button class="member-link ' + (selected && String(selected.id) === String(user.id) ? 'active' : '') + '" data-group-member="' + safe(user.id) + '">' + safe(user.displayName || user.account) + '</button>'); });
-      } else {
-        html.push('<em>暂无成员</em>');
-      }
-      html.push('</div></div>');
-    });
-    html.push('</div><div class="group-total">已展示 ' + safe(String(assignedCount)) + ' / ' + safe(String(users.length)) + ' 名用户</div></section><section class="panel group-detail"><div class="panel-header"><h3>员工信息</h3><p>此处可在后续接入岗位、联系方式、权限范围等附属信息。</p></div>');
-    if (selected) {
-      html.push('<div class="detail-list"><div class="detail-item"><div><strong>姓名</strong><p>员工显示名称</p></div><span>' + safe(selected.name || selected.displayName || selected.account) + '</span></div><div class="detail-item"><div><strong>组归属</strong><p>当前用户组</p></div><span>' + safe(selected.group) + '</span></div><div class="detail-item"><div><strong>账户</strong><p>系统登录账户</p></div><span>' + safe(selected.account) + '</span></div><div class="detail-item"><div><strong>当前密码</strong><p>仅调试阶段明文展示</p></div><span class="password-value">' + safe(selected.password) + '</span></div><div class="detail-item"><div><strong>电话</strong><p>前端维护的联系方式</p></div><span>' + safe(selected.phone || '-') + '</span></div></div>');
+    html.push('</tbody></table></div></section><section class="panel group-detail"><div class="panel-header"><h3>' + safe(selectedGroup || '用户组成员') + '</h3><p>成员信息来自用户表 sys_users 的组归属关系。</p></div>');
+    if (members.length) {
+      html.push('<div class="detail-list">');
+      each(members, function (member) {
+        html.push('<div class="detail-item"><div><strong>' + safe(member.name || member.displayName || member.account) + '</strong><p>账户：' + safe(member.account) + '</p></div><span>' + safe(member.phone || '未填写电话') + '</span></div>');
+      });
+      html.push('</div>');
     } else {
-      html.push('<div class="empty-detail"><strong>请选择员工</strong><p>点击左侧用户组中的姓名查看详情。</p></div>');
+      html.push('<div class="empty-detail"><strong>暂无成员</strong><p>该用户组当前没有有效账户。</p></div>');
     }
     html.push('</section></div>');
     return html.join('');
@@ -786,7 +801,7 @@
     bindClick("[data-action='logout']", function () {
       state.session = null;
       clearStoredSession();
-      state.userManagement = { payload: null, draft: null, groups: [] };
+      state.userManagement = { payload: null, draft: null, groups: [], groupPayload: null };
       render();
     });
 
@@ -969,8 +984,8 @@
       runCost();
     });
 
-    bindClick("[data-group-member]", function (button) {
-      state.userManagement.groupSelectedUser = findRowById((state.userManagement.payload || {}).rows || [], button.getAttribute('data-group-member'));
+    bindClick("[data-group-row]", function (row) {
+      state.userManagement.groupSelectedName = row.getAttribute('data-group-row');
       render();
     });
 
@@ -1063,7 +1078,11 @@
         state.userManagement.draft = cloneRow((payload.rows || [])[0] || {});
       }
       apiGet('/auth/groups', function (groupError, groupPayload) {
+        state.userManagement.groupPayload = groupError ? null : groupPayload;
         state.userManagement.groups = groupError ? [] : (groupPayload.rows || []).map(function (item) { return item.group; });
+        if (!groupError && (!state.userManagement.groupSelectedName || !(groupPayload.rows || []).some(function (item) { return item.group === state.userManagement.groupSelectedName; }))) {
+          state.userManagement.groupSelectedName = groupPayload.rows && groupPayload.rows[0] ? groupPayload.rows[0].group : '';
+        }
         done(callback, groupError, payload);
       });
     });
